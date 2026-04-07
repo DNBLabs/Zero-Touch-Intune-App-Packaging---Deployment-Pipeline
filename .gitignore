@@ -1,0 +1,17 @@
+# Secrets and local overrides (never commit)
+.env
+config.local.json
+
+# Win32 Content Prep output and per-run scratch
+staging/
+*.intunewin
+
+# Processed installers and rejection queue (may contain binaries)
+done/
+failed/
+
+# OS / editor
+Thumbs.db
+.DS_Store
+*.swp
+*.swo

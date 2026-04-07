@@ -4,7 +4,7 @@ Convention-over-configuration **PowerShell 7** pipeline: drop an allowlisted `.m
 
 ## Status
 
-**Scaffold (Task 1)** — Repository layout, secret hygiene, and environment template are in place. Module, scripts, and tests are added in later tasks per the spec.
+**Task 2** — `IntuneDropPipeline` PowerShell module ships `Get-IntuneDropConfiguration` and `Write-IntuneDropLog`. Run tests: `Invoke-Pester .\tests -Output Detailed` from the repo root. Entry scripts (`Process-Inbox.ps1`, `Watch-Inbox.ps1`) come in later tasks.
 
 ## Documentation
 
@@ -22,7 +22,15 @@ Prerequisites will include **PowerShell 7+**, the **Microsoft.Graph** modules, l
 
 1. Copy `.env.example` to `.env`.
 2. Set `INTUNE_DROP_PREP_TOOL_EXE` and Graph-related variables. See [tools/README.md](tools/README.md) for where to place the packaging tool.
-3. Never commit `.env` or real secrets.
+3. Optionally add **`config.local.json`** at the repo root (listed in `.gitignore` — do not commit) to override **path** keys only: `INTUNE_DROP_INBOX_PATH`, `INTUNE_DROP_DONE_PATH`, `INTUNE_DROP_FAILED_PATH`, `INTUNE_DROP_STAGING_PATH`. Process environment variables override those JSON values when both are set.
+4. Never commit `.env` or real secrets.
+
+Load the module after setting process env (for example by dot-sourcing `.env` in your shell, or exporting variables manually):
+
+```powershell
+Import-Module .\src\Modules\IntuneDropPipeline\IntuneDropPipeline.psd1 -Force
+Get-IntuneDropConfiguration
+```
 
 ## Layout
 

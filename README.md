@@ -4,7 +4,7 @@ Convention-over-configuration **PowerShell 7** pipeline: drop an allowlisted `.m
 
 ## Status
 
-**Task 3** — Module adds `Get-IntuneDropPackageFromFileName` (`ERR_FILENAME_CONVENTION` on failure). Run tests: `Invoke-Pester .\tests -Output Detailed`. Entry scripts arrive in later tasks.
+**Task 4** — Allowlisted install/uninstall/detection via `Get-IntuneDropInstallIntent` and `Data/IntuneDropAllowlist.json` (`ERR_ALLOWLIST` when no row matches). Run tests: `Invoke-Pester .\tests -Output Detailed`. Entry scripts arrive in later tasks.
 
 ## Documentation
 
@@ -41,6 +41,17 @@ Installers in `inbox/` must be named:
 - **Vendor** and **AppName** cannot contain underscores (one segment each).
 - **Version** is two to four numeric segments (examples: `1.0`, `1.2.3`, `1.2.3.4`).
 - Parse at runtime with: `Get-IntuneDropPackageFromFileName` (from the module).
+
+## Allowlist (v1)
+
+Committed rows live in **`src/Modules/IntuneDropPipeline/Data/IntuneDropAllowlist.json`**. Extend this file when you add real demo apps; do not invent silent switches for unknown vendors.
+
+| Row id | Extension | Install (summary) | Notes |
+|--------|-----------|-------------------|--------|
+| `portfolio-msi-v1` | `msi` | `msiexec /i "<file>" /qn /norestart` | Uninstall/detection use MSI **product code** (read from the file during packaging on Windows). |
+| `portfolio-inno-style-exe-v1` | `exe` | `"<file>" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART` | Example **Inno-style** flags; file detection path is `%ProgramFiles%\<Vendor>\<AppName>\<AppName>.exe` — adjust the JSON if your EXE installs elsewhere. |
+
+Resolve intent: `Get-IntuneDropInstallIntent -Package (Get-IntuneDropPackageFromFileName -FileName '...')`.
 
 ## Layout
 

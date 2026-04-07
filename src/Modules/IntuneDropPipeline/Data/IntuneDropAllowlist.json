@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "portfolio-msi-v1",
+      "description": "Windows Installer (MSI): silent install via msiexec; product code for uninstall/detection supplied when reading MSI metadata.",
+      "match": {
+        "extension": "msi",
+        "vendor": null,
+        "appName": null
+      },
+      "displayNameTemplate": "{Vendor} {AppName} {Version}",
+      "installCommandTemplate": "msiexec /i \"{InstallerFileName}\" /qn /norestart",
+      "uninstallCommandTemplate": "msiexec /x {ProductCode} /qn /norestart",
+      "detection": {
+        "ruleType": "msiProductCode",
+        "notes": "ProductCode is read from the MSI file during packaging (Windows only)."
+      }
+    },
+    {
+      "id": "portfolio-inno-style-exe-v1",
+      "description": "Self-extracting / Inno-style EXE: VERYSILENT switches; detection uses a file under Program Files (adjust row if your EXE uses another layout).",
+      "match": {
+        "extension": "exe",
+        "vendor": null,
+        "appName": null
+      },
+      "displayNameTemplate": "{Vendor} {AppName} {Version}",
+      "installCommandTemplate": "\"{InstallerFileName}\" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART",
+      "uninstallCommandTemplate": "\"{InstallerFileName}\" /VERYSILENT /UNINSTALL",
+      "detection": {
+        "ruleType": "file",
+        "pathTemplate": "%ProgramFiles%\\{Vendor}\\{AppName}\\{AppName}.exe",
+        "detectionType": "version",
+        "operator": "greaterThanOrEqual",
+        "valueTemplate": "{Version}"
+      }
+    }
+  ]
+}

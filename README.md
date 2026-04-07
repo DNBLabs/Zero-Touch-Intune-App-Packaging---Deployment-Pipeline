@@ -4,7 +4,7 @@ Convention-over-configuration **PowerShell 7** pipeline: drop an allowlisted `.m
 
 ## Status
 
-**Task 2** — `IntuneDropPipeline` PowerShell module ships `Get-IntuneDropConfiguration` and `Write-IntuneDropLog`. Run tests: `Invoke-Pester .\tests -Output Detailed` from the repo root. Entry scripts (`Process-Inbox.ps1`, `Watch-Inbox.ps1`) come in later tasks.
+**Task 3** — Module adds `Get-IntuneDropPackageFromFileName` (`ERR_FILENAME_CONVENTION` on failure). Run tests: `Invoke-Pester .\tests -Output Detailed`. Entry scripts arrive in later tasks.
 
 ## Documentation
 
@@ -31,6 +31,16 @@ Load the module after setting process env (for example by dot-sourcing `.env` in
 Import-Module .\src\Modules\IntuneDropPipeline\IntuneDropPipeline.psd1 -Force
 Get-IntuneDropConfiguration
 ```
+
+## Filename convention
+
+Installers in `inbox/` must be named:
+
+`Vendor_AppName_x.y.z.msi` or `Vendor_AppName_x.y.z.exe`
+
+- **Vendor** and **AppName** cannot contain underscores (one segment each).
+- **Version** is two to four numeric segments (examples: `1.0`, `1.2.3`, `1.2.3.4`).
+- Parse at runtime with: `Get-IntuneDropPackageFromFileName` (from the module).
 
 ## Layout
 

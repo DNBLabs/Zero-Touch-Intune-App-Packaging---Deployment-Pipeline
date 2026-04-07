@@ -2,7 +2,7 @@
 .SYNOPSIS
     IntuneDropPipeline module — configuration and logging for the zero-touch Win32 drop-folder pipeline.
 .DESCRIPTION
-    Provides Get-IntuneDropConfiguration for resolved paths and secrets (from environment variables only for sensitive values) and Write-IntuneDropLog for structured information stream output.
+    Provides Get-IntuneDropConfiguration, Get-IntuneDropPackageFromFileName (filename convention validation), and Write-IntuneDropLog.
 #>
 
 $privateScripts = Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Private') -Filter '*.ps1' -File -ErrorAction Stop
@@ -17,5 +17,6 @@ foreach ($script in $publicScripts) {
 
 Export-ModuleMember -Function @(
     'Get-IntuneDropConfiguration',
+    'Get-IntuneDropPackageFromFileName',
     'Write-IntuneDropLog'
 )

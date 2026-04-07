@@ -30,7 +30,7 @@ CompanyName = 'Unknown'
 Copyright = '(c) Portfolio. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'Configuration and logging for zero-touch Intune Win32 drop-folder packaging.'
+Description = 'Configuration, filename convention parsing, and logging for zero-touch Intune Win32 drop-folder packaging.'
 
 # Minimum version of the PowerShell engine required by this module
 PowerShellVersion = '7.0'
@@ -69,7 +69,7 @@ PowerShellVersion = '7.0'
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = 'Get-IntuneDropConfiguration', 'Write-IntuneDropLog'
+FunctionsToExport = 'Get-IntuneDropConfiguration', 'Get-IntuneDropPackageFromFileName', 'Write-IntuneDropLog'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()

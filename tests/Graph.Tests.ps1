@@ -59,13 +59,22 @@ Describe 'New-IntuneDropWin32LobApp (mocked Graph)' {
 }
 
 Describe 'New-IntuneDropWin32LobGroupAssignment (mocked Graph)' {
-    It 'POSTs a group assignment' {
+    It 'POSTs a group assignment with installIntent required (not requiredInstall)' {
+        $script:groupAssignmentBody = $null
         Mock -ModuleName IntuneDropPipeline -CommandName Invoke-IntuneDropGraphRequest -MockWith {
+            param([string] $Method, [string] $Uri, $Body)
+            if ($Method -eq 'POST' -and $Uri -match '/assignments$') {
+                $script:groupAssignmentBody = $Body
+            }
             return @{ id = 'assignment-1' }
         }
 
         $result = New-IntuneDropWin32LobGroupAssignment -MobileAppId 'app-1' -GroupId 'group-2'
         $result.id | Should -Be 'assignment-1'
+        $script:groupAssignmentBody | Should -Not -BeNullOrEmpty
+        $script:groupAssignmentBody['@odata.type'] | Should -Be '#microsoft.graph.mobileAppAssignment'
+        $script:groupAssignmentBody['intent'] | Should -Be 'required'
+        $script:groupAssignmentBody['target']['@odata.type'] | Should -Be '#microsoft.graph.groupAssignmentTarget'
     }
 }
 

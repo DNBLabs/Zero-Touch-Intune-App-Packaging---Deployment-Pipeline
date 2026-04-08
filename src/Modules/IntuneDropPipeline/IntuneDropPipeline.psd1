@@ -30,7 +30,7 @@ CompanyName = 'Unknown'
 Copyright = '(c) Portfolio. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'Configuration, filename parsing, allowlisted install intent, MSI product code lookup (Windows), IntuneWin packaging, and logging for zero-touch Intune Win32 deployment.'
+Description = 'Zero-touch Intune Win32 packaging: config, conventions, Content Prep, MSI metadata, Microsoft Graph publish/assign pipelines, and logging.'
 
 # Minimum version of the PowerShell engine required by this module
 PowerShellVersion = '7.0'
@@ -50,7 +50,7 @@ PowerShellVersion = '7.0'
 # Processor architecture (None, X86, Amd64) required by this module
 # ProcessorArchitecture = ''
 
-# Modules that must be imported into the global environment prior to importing this module
+# Microsoft.Graph.Authentication (and often Microsoft.Graph) required when calling Graph cmdlets — see README.
 # RequiredModules = @()
 
 # Assemblies that must be loaded prior to importing this module
@@ -69,7 +69,7 @@ PowerShellVersion = '7.0'
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = 'Get-IntuneDropConfiguration', 'Get-IntuneDropInstallIntent', 'Get-IntuneDropMsiProductCode', 'Get-IntuneDropPackageFromFileName', 'New-IntuneDropWin32Package', 'Write-IntuneDropLog'
+FunctionsToExport = 'Connect-IntuneDropGraphSession', 'Disconnect-IntuneDropGraphSession', 'Get-IntuneDropConfiguration', 'Get-IntuneDropInstallIntent', 'Get-IntuneDropMsiProductCode', 'Get-IntuneDropPackageFromFileName', 'New-IntuneDropWin32LobApp', 'New-IntuneDropWin32LobGroupAssignment', 'New-IntuneDropWin32Package', 'Publish-IntuneDropWin32LobIntuneWinContent', 'Write-IntuneDropLog'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()

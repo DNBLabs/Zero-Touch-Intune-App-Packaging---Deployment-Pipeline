@@ -4,7 +4,7 @@ Convention-over-configuration **PowerShell 7** pipeline: drop an allowlisted `.m
 
 ## Status
 
-**Task 6** — `New-IntuneDropWin32Package` runs **IntuneWinAppUtil.exe** under an isolated job folder under **staging** (`ERR_PACKAGING` on failure; stdout/stderr logs next to the job). Unit tests mock the prep process; use a real `.msi`/`.exe` and installed prep tool for manual validation. Entry scripts arrive in later tasks.
+**Task 7** — Microsoft Graph (**beta**): `Connect-IntuneDropGraphSession` (app client secret), `New-IntuneDropWin32LobApp`, `Publish-IntuneDropWin32LobIntuneWinContent` (SAS upload + commit + `committedContentVersion`), `New-IntuneDropWin32LobGroupAssignment`, `Disconnect-IntuneDropGraphSession`. Requires `Install-Module Microsoft.Graph` (see [Microsoft Graph PowerShell SDK](https://learn.microsoft.com/powershell/microsoftgraph/installation)). App registration needs **Application** permission **DeviceManagementApps.ReadWrite.All** (admin consent). Graph failures surface **`ERR_GRAPH`**. Unit tests mock `Invoke-IntuneDropGraphRequest` / blob PUT. Entry scripts (orchestrator) arrive in a later task.
 
 ## Documentation
 
@@ -59,6 +59,15 @@ Packaging example (after configuring `Get-IntuneDropConfiguration`):
 $c = Get-IntuneDropConfiguration
 New-IntuneDropWin32Package -InstallerPath (Join-Path $c.InboxPath 'Contoso_App_1.0.0.msi') -StagingPath $c.StagingPath -PrepToolExe $c.PrepToolExe
 ```
+
+### Graph publish (lab checklist)
+
+1. `Install-Module Microsoft.Graph -Scope CurrentUser`
+2. `Connect-IntuneDropGraphSession -UseConfiguration` (loads tenant/app from env).
+3. Build `$intent` (with MSI **ProductCode** filled for `.msi`), `$pack = New-IntuneDropWin32Package ...`, `$app = New-IntuneDropWin32LobApp -InstallIntent $intent -IntuneWinPath $pack.IntuneWinPath`, `Publish-IntuneDropWin32LobIntuneWinContent -MobileAppId $app.Id -IntuneWinPath $pack.IntuneWinPath`, `New-IntuneDropWin32LobGroupAssignment -MobileAppId $app.Id -GroupId $c.TestGroupId`.
+4. `Disconnect-IntuneDropGraphSession` when finished.
+
+Use **`(Get-IntuneDropConfiguration).TestGroupId`** for the Entra group object ID (`INTUNE_DROP_TEST_GROUP_ID`).
 
 ## Layout
 

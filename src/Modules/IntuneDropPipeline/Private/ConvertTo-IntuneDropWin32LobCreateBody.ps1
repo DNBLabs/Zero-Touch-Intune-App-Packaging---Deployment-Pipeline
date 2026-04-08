@@ -90,8 +90,8 @@ function ConvertTo-IntuneDropWin32LobCreateBody {
         'size'                           = [long]$sizeValue
         'installCommandLine'             = [string]$InstallIntent.InstallCommandLine
         'uninstallCommandLine'           = [string]$InstallIntent.UninstallCommandLine
-        # When allowedArchitectures is set, Graph sets applicableArchitectures to none; send that pair explicitly to avoid validation issues.
-        'applicableArchitectures'        = 'none'
+        # Match Microsoft Graph win32LobApp create examples (matching x64/x64 or x86/x86); explicit applicable none with allowed x64 produced 400 from Intune.
+        'applicableArchitectures'        = 'x64'
         'allowedArchitectures'           = 'x64'
         # Graph expects values like Windows10_22H2 / Windows11_23H2 — a bare release label (e.g. 22H2) is rejected by the service.
         'minimumSupportedWindowsRelease' = 'Windows10_22H2'
@@ -113,6 +113,41 @@ function ConvertTo-IntuneDropWin32LobCreateBody {
     if ($null -ne $msiBlock) {
         $body['msiInformation'] = $msiBlock
     }
+
+    # #region agent log
+    try {
+        $dbgRepoRoot = Get-IntuneDropRepositoryRoot
+        $dbgPath = Join-Path -Path $dbgRepoRoot -ChildPath 'debug-7596d3.log'
+        $dbgRule0 = $body['rules'][0]
+        $dbgData = [ordered]@{
+            displayNameLen        = ($body['displayName']).Length
+            extension             = [string]$InstallIntent.Package.Extension
+            setupFilePath         = [string]$body['setupFilePath']
+            fileName              = [string]$body['fileName']
+            size                  = [long]$body['size']
+            minWinRelease         = [string]$body['minimumSupportedWindowsRelease']
+            applicableArch        = [string]$body['applicableArchitectures']
+            allowedArch           = [string]$body['allowedArchitectures']
+            rule0OdataType        = [string]$dbgRule0['@odata.type']
+            rule0Path             = if ($null -ne $dbgRule0['path']) { [string]$dbgRule0['path'] } else { $null }
+            rule0PathEmpty        = [string]::IsNullOrEmpty([string]$dbgRule0['path'])
+            rule0FileOrFolderName = if ($null -ne $dbgRule0['fileOrFolderName']) { [string]$dbgRule0['fileOrFolderName'] } else { $null }
+            hasMsiInformation     = $body.Keys -contains 'msiInformation'
+            installCmdLen         = ($body['installCommandLine']).Length
+            uninstallCmdLen       = ($body['uninstallCommandLine']).Length
+        }
+        $dbgPayload = [ordered]@{
+            sessionId    = '7596d3'
+            timestamp    = [int64]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())
+            hypothesisId = 'H1,H3,H4'
+            location     = 'ConvertTo-IntuneDropWin32LobCreateBody:end'
+            message      = 'win32LobApp create body summary'
+            data         = $dbgData
+        }
+        Add-Content -LiteralPath $dbgPath -Value ($dbgPayload | ConvertTo-Json -Compress -Depth 8) -Encoding utf8
+    }
+    catch { }
+    # #endregion
 
     return [hashtable]$body
 }

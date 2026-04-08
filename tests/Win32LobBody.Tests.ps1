@@ -28,7 +28,7 @@ Describe 'ConvertTo-IntuneDropWin32LobCreateBody' {
             $rule.comparisonValue | Should -Be '2.0'
             $rule.PSObject.Properties.Name | Should -Not -Contain 'detectionType'
             $body.minimumSupportedWindowsRelease | Should -Be 'Windows10_22H2'
-            $body.applicableArchitectures | Should -Be 'none'
+            $body.applicableArchitectures | Should -Be 'x64'
             $body.allowedArchitectures | Should -Be 'x64'
         } -ArgumentList $intent, ([pscustomobject]@{
                 SetupFileName          = 'Fabrikam_App_2.0.exe'

@@ -4,7 +4,7 @@ Convention-over-configuration **PowerShell 7** pipeline: drop an allowlisted `.m
 
 ## Status
 
-**Task 4** — Allowlisted install/uninstall/detection via `Get-IntuneDropInstallIntent` and `Data/IntuneDropAllowlist.json` (`ERR_ALLOWLIST` when no row matches). Run tests: `Invoke-Pester .\tests -Output Detailed`. Entry scripts arrive in later tasks.
+**Task 5** — `Get-IntuneDropMsiProductCode` reads **ProductCode** from an `.msi` via **Windows Installer COM** (Windows only; `ERR_MSI_METADATA` on failure). Optional integration test: set `INTUNE_DROP_TEST_MSI_PATH` to a real MSI, then `Invoke-Pester .\tests`. Entry scripts arrive in later tasks.
 
 ## Documentation
 
@@ -48,7 +48,7 @@ Committed rows live in **`src/Modules/IntuneDropPipeline/Data/IntuneDropAllowlis
 
 | Row id | Extension | Install (summary) | Notes |
 |--------|-----------|-------------------|--------|
-| `portfolio-msi-v1` | `msi` | `msiexec /i "<file>" /qn /norestart` | Uninstall/detection use MSI **product code** (read from the file during packaging on Windows). |
+| `portfolio-msi-v1` | `msi` | `msiexec /i "<file>" /qn /norestart` | Uninstall/detection use MSI **product code** from `Get-IntuneDropMsiProductCode -Path '<full path to msi>'` (Windows + COM only). |
 | `portfolio-inno-style-exe-v1` | `exe` | `"<file>" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART` | Example **Inno-style** flags; file detection path is `%ProgramFiles%\<Vendor>\<AppName>\<AppName>.exe` — adjust the JSON if your EXE installs elsewhere. |
 
 Resolve intent: `Get-IntuneDropInstallIntent -Package (Get-IntuneDropPackageFromFileName -FileName '...')`.

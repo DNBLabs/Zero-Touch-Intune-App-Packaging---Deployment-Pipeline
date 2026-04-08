@@ -2,13 +2,14 @@
 .SYNOPSIS
     IntuneDropPipeline module — configuration and logging for the zero-touch Win32 drop-folder pipeline.
 .DESCRIPTION
-    Provides Get-IntuneDropConfiguration, Get-IntuneDropPackageFromFileName, Get-IntuneDropInstallIntent (allowlisted install/detection), and Write-IntuneDropLog.
+    Provides configuration, filename parsing, allowlisted install intent, MSI ProductCode lookup (Windows), and structured logging.
 #>
 
 $privateDirectory = Join-Path -Path $PSScriptRoot -ChildPath 'Private'
 $privateScriptLoadOrder = @(
     'New-IntuneDropFilenameErrorRecord.ps1'
     'New-IntuneDropAllowlistErrorRecord.ps1'
+    'New-IntuneDropMsiMetadataErrorRecord.ps1'
     'Get-IntuneDropRepositoryRoot.ps1'
     'Resolve-IntuneDropManagedPaths.ps1'
     'Get-IntuneDropAllowlistEntries.ps1'
@@ -33,6 +34,7 @@ foreach ($script in $publicScripts) {
 Export-ModuleMember -Function @(
     'Get-IntuneDropConfiguration'
     'Get-IntuneDropInstallIntent'
+    'Get-IntuneDropMsiProductCode'
     'Get-IntuneDropPackageFromFileName'
     'Write-IntuneDropLog'
 )

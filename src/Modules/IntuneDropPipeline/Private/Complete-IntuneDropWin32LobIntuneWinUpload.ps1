@@ -1,6 +1,8 @@
 <#
 .SYNOPSIS
     Creates a Win32 LOB content version, uploads the .intunewin via SAS URI, commits the file, and marks the version committed on the app.
+.DESCRIPTION
+    Uses Graph v1.0 with the typed LOB segment microsoft.graph.mobileLobApp before contentVersions and files (required for win32LobApp; POST .../mobileApps/{id}/contentVersions without the cast returns 400 Resource not found for the segment contentVersions). The commit action body must include fileEncryptionInfo with @odata.type #microsoft.graph.fileEncryptionInfo or Intune may leave the file in commitFileFailed. ZIP-wrapped packages upload only IntuneWinPackage/Contents/IntunePackage.intunewin bytes to Azure so the blob length matches mobileAppContentFile.sizeEncrypted; legacy packages upload the entire .intunewin file.
 #>
 function Complete-IntuneDropWin32LobIntuneWinUpload {
     [CmdletBinding()]
@@ -27,10 +29,13 @@ function Complete-IntuneDropWin32LobIntuneWinUpload {
     $metadata = Get-IntuneDropIntuneWinPackageMetadata -Path $IntuneWinPath
     $fileItem = Get-Item -LiteralPath $metadata.IntuneWinPath
     $leaf = $fileItem.Name
-    $graphBase = 'https://graph.microsoft.com/beta/deviceAppManagement/mobileApps'
+    $graphBase = 'https://graph.microsoft.com/v1.0/deviceAppManagement/mobileApps'
+    $lobContentRoot = "$graphBase/$MobileAppId/microsoft.graph.mobileLobApp"
 
-    $versionUri = "$graphBase/$MobileAppId/microsoft.graph.win32LobApp/contentVersions"
-    $versionResponse = Invoke-IntuneDropGraphRequest -Method POST -Uri $versionUri -Body ([ordered]@{})
+    $versionUri = "$lobContentRoot/contentVersions"
+    $versionResponse = Invoke-IntuneDropGraphRequest -Method POST -Uri $versionUri -Body ([ordered]@{
+            '@odata.type' = '#microsoft.graph.mobileAppContent'
+        })
     $versionId = [string]($versionResponse.id ?? $versionResponse.Id)
 
     $unencryptedSize = $metadata.UnencryptedContentSize
@@ -38,15 +43,20 @@ function Complete-IntuneDropWin32LobIntuneWinUpload {
         $unencryptedSize = $fileItem.Length
     }
 
-    $fileCreateBody = [ordered]@{
-        '@odata.type'   = '#microsoft.graph.mobileAppContentFile'
-        'name'          = $leaf
-        'size'          = [long]$unencryptedSize
-        'sizeEncrypted' = [long]$fileItem.Length
-        'isDependency'  = $false
+    $sizeEncrypted = $metadata.EncryptedContentSize
+    if ($null -eq $sizeEncrypted) {
+        $sizeEncrypted = [long]$fileItem.Length
     }
 
-    $filesUri = "$graphBase/$MobileAppId/microsoft.graph.win32LobApp/contentVersions/$versionId/files"
+    $fileCreateBody = [ordered]@{
+        '@odata.type'     = '#microsoft.graph.mobileAppContentFile'
+        'name'            = $leaf
+        'size'            = [long]$unencryptedSize
+        'sizeEncrypted'   = [long]$sizeEncrypted
+        'isDependency'    = $false
+    }
+
+    $filesUri = "$lobContentRoot/contentVersions/$versionId/files"
     $fileResponse = Invoke-IntuneDropGraphRequest -Method POST -Uri $filesUri -Body $fileCreateBody
     $fileId = [string]($fileResponse.id ?? $fileResponse.Id)
 
@@ -66,12 +76,37 @@ function Complete-IntuneDropWin32LobIntuneWinUpload {
         $PSCmdlet.ThrowTerminatingError($record)
     }
 
-    Invoke-IntuneDropAzureBlobSinglePut -SasUri $sasUri -FilePath $fileItem.FullName
+    $blobUploadPath = $fileItem.FullName
+    $blobUploadTempPath = $null
+    if ($metadata.PackageLayout -eq 'Zip' -and $null -ne $metadata.EncryptedContentSize) {
+        $blobUploadTempPath = Export-IntuneDropIntuneWinZipEncryptedPayloadToTemp -SourcePath $fileItem.FullName
+        $blobUploadPath = $blobUploadTempPath
+    }
+
+    try {
+        Invoke-IntuneDropAzureBlobSinglePut -SasUri $sasUri -FilePath $blobUploadPath
+    }
+    finally {
+        if ($null -ne $blobUploadTempPath -and (Test-Path -LiteralPath $blobUploadTempPath)) {
+            Remove-Item -LiteralPath $blobUploadTempPath -Force -ErrorAction SilentlyContinue
+        }
+    }
 
     $commitUri = "$fileInstanceUri/commit"
+    $srcFei = $metadata.FileEncryptionInfo
     $commitBody = [ordered]@{
-        'fileEncryptionInfo' = $metadata.FileEncryptionInfo
+        'fileEncryptionInfo' = [ordered]@{
+            '@odata.type'          = '#microsoft.graph.fileEncryptionInfo'
+            'encryptionKey'        = [string]$srcFei.encryptionKey
+            'macKey'               = [string]$srcFei.macKey
+            'initializationVector' = [string]$srcFei.initializationVector
+            'mac'                  = [string]$srcFei.mac
+            'profileIdentifier'    = [string]$srcFei.profileIdentifier
+            'fileDigest'           = [string]$srcFei.fileDigest
+            'fileDigestAlgorithm'  = [string]$srcFei.fileDigestAlgorithm
+        }
     }
+
     Invoke-IntuneDropGraphRequest -Method POST -Uri $commitUri -Body $commitBody | Out-Null
 
     $committed = $false
@@ -83,7 +118,8 @@ function Complete-IntuneDropWin32LobIntuneWinUpload {
         }
         $state = [string]$fileState.uploadState
         if ($state -match 'commitFileFailed|error') {
-            $record = New-IntuneDropGraphErrorRecord -Message "Intune reported upload state '$state' while waiting for commit." -TargetObject $fileInstanceUri
+            $detail = "uploadState=$state; name=$([string]$fileState.name); size=$([string]$fileState.size); sizeEncrypted=$([string]$fileState.sizeEncrypted)."
+            $record = New-IntuneDropGraphErrorRecord -Message "Intune reported upload state '$state' while waiting for commit. $detail" -TargetObject $fileInstanceUri
             $PSCmdlet.ThrowTerminatingError($record)
         }
         Start-Sleep -Seconds $CommitPollSeconds

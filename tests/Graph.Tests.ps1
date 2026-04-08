@@ -84,10 +84,13 @@ Describe 'Publish-IntuneDropWin32LobIntuneWinContent (mocked Graph)' {
     }
 
     It 'runs upload, commit, and patch when Graph and blob calls succeed' {
+        $script:publishGraphCalls = [System.Collections.Generic.List[string]]::new()
+        $script:publishCommitBody = $null
         Mock -ModuleName IntuneDropPipeline -CommandName Invoke-IntuneDropAzureBlobSinglePut -MockWith { }
 
         Mock -ModuleName IntuneDropPipeline -CommandName Invoke-IntuneDropGraphRequest -MockWith {
-            param([string] $Method, [string] $Uri)
+            param([string] $Method, [string] $Uri, $Body)
+            [void]$script:publishGraphCalls.Add(('{0} {1}' -f $Method, $Uri))
 
             if ($Method -eq 'POST' -and $Uri -match '/files$') {
                 return @{ id = 'file-9' }
@@ -110,6 +113,7 @@ Describe 'Publish-IntuneDropWin32LobIntuneWinContent (mocked Graph)' {
                 }
             }
             if ($Method -eq 'POST' -and $Uri -match 'commit') {
+                $script:publishCommitBody = $Body
                 return @{ }
             }
             if ($Method -eq 'PATCH') {
@@ -129,5 +133,12 @@ Describe 'Publish-IntuneDropWin32LobIntuneWinContent (mocked Graph)' {
         $publish.MobileAppId | Should -Be 'app-publish-1'
         $publish.CommittedContentVersion | Should -Be 'ver-9'
         $publish.ContentFileId | Should -Be 'file-9'
+
+        $contentVersionPost = @($script:publishGraphCalls | Where-Object { $_ -match '^POST https://graph\.microsoft\.com/v1\.0/deviceAppManagement/mobileApps/[^/]+/microsoft\.graph\.mobileLobApp/contentVersions$' })
+        $contentVersionPost | Should -HaveCount 1
+
+        $script:publishCommitBody | Should -Not -BeNullOrEmpty
+        $script:publishCommitBody['fileEncryptionInfo'] | Should -Not -BeNullOrEmpty
+        $script:publishCommitBody['fileEncryptionInfo']['@odata.type'] | Should -Be '#microsoft.graph.fileEncryptionInfo'
     }
 }

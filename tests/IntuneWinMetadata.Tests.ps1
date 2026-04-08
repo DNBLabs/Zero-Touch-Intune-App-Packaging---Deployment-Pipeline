@@ -93,6 +93,64 @@ Describe 'Get-IntuneDropIntuneWinPackageMetadata' {
             $metadata.SetupFileName | Should -Be 'InsideSetup.msi'
             $metadata.UnencryptedContentSize | Should -Be 4096
             $metadata.FileEncryptionInfo.encryptionKey | Should -Be 'ZW5j'
+            $metadata.EncryptedContentSize | Should -Be $null
+            $metadata.PackageLayout | Should -Be 'Zip'
+        }
+    }
+
+    It 'ZIP .intunewin sets EncryptedContentSize from IntuneWinPackage/Contents/IntunePackage.intunewin entry length' {
+        $zipIntuneWin = Join-Path -Path $TestDrive -ChildPath 'zip-with-inner.intunewin'
+        if (Test-Path -LiteralPath $zipIntuneWin) {
+            Remove-Item -LiteralPath $zipIntuneWin -Force
+        }
+        $innerPayload = [byte[]]::new(123)
+        for ($i = 0; $i -lt $innerPayload.Length; $i++) { $innerPayload[$i] = [byte]($i % 251) }
+
+        $xml = @'
+<ApplicationInfo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ToolVersion="1.8.4.0">
+  <Name>BundleName</Name>
+  <SetupFile>InsideSetup.msi</SetupFile>
+  <UnencryptedContentSize>4096</UnencryptedContentSize>
+  <EncryptionInfo>
+    <EncryptionKey>ZW5j</EncryptionKey>
+    <MacKey>bWFj</MacKey>
+    <InitializationVector>aXY=</InitializationVector>
+    <Mac>a2V5</Mac>
+    <ProfileIdentifier>cHJm</ProfileIdentifier>
+    <FileDigest>ZGln</FileDigest>
+    <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
+  </EncryptionInfo>
+</ApplicationInfo>
+'@
+        $zip = [System.IO.Compression.ZipFile]::Open($zipIntuneWin, [System.IO.Compression.ZipArchiveMode]::Create)
+        try {
+            $e1 = $zip.CreateEntry('IntuneWinPackage/Metadata/Detection.xml')
+            $sw1 = [System.IO.StreamWriter]::new($e1.Open())
+            try { $sw1.Write($xml) }
+            finally { $sw1.Dispose() }
+
+            $e2 = $zip.CreateEntry('IntuneWinPackage/Contents/IntunePackage.intunewin')
+            $zs = $e2.Open()
+            try { $zs.Write($innerPayload, 0, $innerPayload.Length) }
+            finally { $zs.Dispose() }
+        }
+        finally {
+            $zip.Dispose()
+        }
+
+        InModuleScope -ModuleName 'IntuneDropPipeline' -ArgumentList @($zipIntuneWin) -ScriptBlock {
+            param([string] $IntuneWinPath)
+            $metadata = Get-IntuneDropIntuneWinPackageMetadata -Path $IntuneWinPath
+            $metadata.EncryptedContentSize | Should -Be 123
+            $metadata.PackageLayout | Should -Be 'Zip'
+
+            $extracted = Export-IntuneDropIntuneWinZipEncryptedPayloadToTemp -SourcePath $IntuneWinPath
+            try {
+                (Get-Item -LiteralPath $extracted).Length | Should -Be 123
+            }
+            finally {
+                Remove-Item -LiteralPath $extracted -Force -ErrorAction SilentlyContinue
+            }
         }
     }
 
@@ -134,6 +192,8 @@ Describe 'Get-IntuneDropIntuneWinPackageMetadata' {
             $metadata.UnencryptedContentSize | Should -Be 2048
             $metadata.FileEncryptionInfo.encryptionKey | Should -Be 'ZW5j'
             $metadata.FileEncryptionInfo.fileDigestAlgorithm | Should -Be 'SHA256'
+            $metadata.EncryptedContentSize | Should -Be 32
+            $metadata.PackageLayout | Should -Be 'Legacy'
         }
     }
 }

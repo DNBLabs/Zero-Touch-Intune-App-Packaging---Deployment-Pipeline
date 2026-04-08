@@ -13,6 +13,7 @@ $privateScriptLoadOrder = @(
     'New-IntuneDropPackagingErrorRecord.ps1'
     'New-IntuneDropGraphErrorRecord.ps1'
     'Get-IntuneDropIntuneWinPackageMetadata.ps1'
+    'Export-IntuneDropIntuneWinZipEncryptedPayloadToTemp.ps1'
     'Get-IntuneDropMgContext.ps1'
     'Invoke-IntuneDropGraphRequest.ps1'
     'Invoke-IntuneDropAzureBlobSinglePut.ps1'

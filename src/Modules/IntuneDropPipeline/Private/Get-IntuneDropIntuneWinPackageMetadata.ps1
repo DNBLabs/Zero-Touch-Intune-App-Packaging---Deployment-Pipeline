@@ -2,7 +2,7 @@
 .SYNOPSIS
     Reads ApplicationInfo metadata from a Microsoft Win32 Content Prep (.intunewin) file.
 .DESCRIPTION
-    Supports two layouts from Microsoft IntuneWinAppUtil: (1) current packages — outer ZIP (PK header) containing IntuneWinPackage/Metadata/Detection.xml with ApplicationInfo; (2) legacy packages — 4-byte little-endian XML length followed by UTF-8 ApplicationInfo XML, then encrypted payload. Normalizes encryption fields for Graph commit operations.
+    Supports two layouts from Microsoft IntuneWinAppUtil: (1) current packages — outer ZIP (PK header) containing IntuneWinPackage/Metadata/Detection.xml with ApplicationInfo; (2) legacy packages — 4-byte little-endian XML length followed by UTF-8 ApplicationInfo XML, then encrypted payload. Normalizes encryption fields for Graph commit operations. Exposes EncryptedContentSize for mobileAppContentFile.sizeEncrypted: ZIP packages use the length of IntuneWinPackage/Contents/IntunePackage.intunewin (not the outer file); legacy uses bytes after the XML block. The full .intunewin is still uploaded to Azure; Graph expects sizeEncrypted to match the encrypted payload Intune verifies.
 .PARAMETER Path
     Full path to the .intunewin file.
 #>
@@ -41,7 +41,9 @@ function Get-IntuneDropIntuneWinPackageMetadata {
     }
 
     $isZipOuter = ($lengthPrefix[0] -eq 0x50 -and $lengthPrefix[1] -eq 0x4B -and $lengthPrefix[2] -eq 0x03 -and $lengthPrefix[3] -eq 0x04)
+    $packageLayout = if ($isZipOuter) { 'Zip' } else { 'Legacy' }
 
+    $encryptedContentSize = $null
     $xmlText = $null
     try {
         if ($isZipOuter) {
@@ -84,6 +86,27 @@ function Get-IntuneDropIntuneWinPackageMetadata {
                 finally {
                     $sr.Dispose()
                 }
+
+                $encryptedEntry = $null
+                foreach ($entry in $zip.Entries) {
+                    $normalized = $entry.FullName -replace '\\', '/'
+                    if ($normalized -match '(?i)^IntuneWinPackage/Contents/IntunePackage\.intunewin$') {
+                        $encryptedEntry = $entry
+                        break
+                    }
+                }
+                if ($null -eq $encryptedEntry) {
+                    foreach ($entry in $zip.Entries) {
+                        $normalized = $entry.FullName -replace '\\', '/'
+                        if ($normalized -match '(?i)^IntuneWinPackage/Contents/[^/]+\.intunewin$') {
+                            $encryptedEntry = $entry
+                            break
+                        }
+                    }
+                }
+                if ($null -ne $encryptedEntry) {
+                    $encryptedContentSize = [long]$encryptedEntry.Length
+                }
             }
             finally {
                 $zip.Dispose()
@@ -116,6 +139,12 @@ function Get-IntuneDropIntuneWinPackageMetadata {
                     $PSCmdlet.ThrowTerminatingError($record)
                 }
                 $xmlText = [System.Text.Encoding]::UTF8.GetString($xmlBytes)
+                $payloadLength = $fileInfo.Length - 4 - $xmlByteLength
+                if ($payloadLength -lt 0) {
+                    $record = New-IntuneDropGraphErrorRecord -Message 'Legacy IntuneWin file size is smaller than header plus XML; cannot derive encrypted payload length.' -TargetObject $resolved
+                    $PSCmdlet.ThrowTerminatingError($record)
+                }
+                $encryptedContentSize = [long]$payloadLength
             }
             finally {
                 $fileStream.Dispose()
@@ -192,6 +221,8 @@ function Get-IntuneDropIntuneWinPackageMetadata {
     [pscustomobject]@{
         SetupFileName          = $setupName
         UnencryptedContentSize = $unencryptedSize
+        EncryptedContentSize   = $encryptedContentSize
+        PackageLayout          = [string]$packageLayout
         FileEncryptionInfo     = [pscustomobject]$graphEncryption
         RawXml                 = $xmlText
         EncryptedFileBytes     = $fileInfo.Length

@@ -1,6 +1,8 @@
 <#
 .SYNOPSIS
     Builds the JSON-ready hashtable for POST /deviceAppManagement/mobileApps (win32LobApp).
+.DESCRIPTION
+    Shapes the body for Graph v1.0 create. Omits beta-only mobileApp fields (for example displayVersion) and read-only properties (size) that the service rejects on create.
 #>
 function ConvertTo-IntuneDropWin32LobCreateBody {
     [CmdletBinding()]
@@ -85,7 +87,6 @@ function ConvertTo-IntuneDropWin32LobCreateBody {
         'publisher'                      = [string]$InstallIntent.Package.Vendor
         'developer'                      = [string]$InstallIntent.Package.Vendor
         'owner'                          = [string]$InstallIntent.Package.Vendor
-        'displayVersion'                 = [string]$InstallIntent.Package.Version
         'fileName'                       = $IntuneWinFileName
         'setupFilePath'                  = [string]$IntuneWinMetadata.SetupFileName
         # Do not set mobileLobApp.size on create (read-only in Graph); upload sets size on mobileAppContentFile. Still 400 when size was included after x64/x64 fix.
@@ -115,44 +116,6 @@ function ConvertTo-IntuneDropWin32LobCreateBody {
     if ($null -ne $msiBlock) {
         $body['msiInformation'] = $msiBlock
     }
-
-    # #region agent log
-    try {
-        $dbgRepoRoot = Get-IntuneDropRepositoryRoot
-        $dbgPath = Join-Path -Path $dbgRepoRoot -ChildPath 'debug-7596d3.log'
-        $dbgRule0 = $body['rules'][0]
-        $dbgData = [ordered]@{
-            displayNameLen        = ($body['displayName']).Length
-            extension             = [string]$InstallIntent.Package.Extension
-            setupFilePath         = [string]$body['setupFilePath']
-            fileName              = [string]$body['fileName']
-            createBodyOmitsSize   = -not ($body.Keys -contains 'size')
-            unencryptedSizeOrFile = [long]$sizeValue
-            minWinRelease         = [string]$body['minimumSupportedWindowsRelease']
-            applicableArch        = [string]$body['applicableArchitectures']
-            allowedArch           = [string]$body['allowedArchitectures']
-            rule0OdataType        = [string]$dbgRule0['@odata.type']
-            rule0Path             = if ($null -ne $dbgRule0['path']) { [string]$dbgRule0['path'] } else { $null }
-            rule0PathEmpty        = [string]::IsNullOrEmpty([string]$dbgRule0['path'])
-            rule0FileOrFolderName = if ($null -ne $dbgRule0['fileOrFolderName']) { [string]$dbgRule0['fileOrFolderName'] } else { $null }
-            rule0OperationType    = if ($null -ne $dbgRule0['operationType']) { [string]$dbgRule0['operationType'] } else { $null }
-            hasMsiInformation     = $body.Keys -contains 'msiInformation'
-            installCmdLen         = ($body['installCommandLine']).Length
-            uninstallCmdLen       = ($body['uninstallCommandLine']).Length
-            installExpKeys        = @([string[]]@($body['installExperience'].Keys))
-        }
-        $dbgPayload = [ordered]@{
-            sessionId    = '7596d3'
-            timestamp    = [int64]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())
-            hypothesisId = 'H1,H3,H4,H6,H10,H11'
-            location     = 'ConvertTo-IntuneDropWin32LobCreateBody:end'
-            message      = 'win32LobApp create body summary'
-            data         = $dbgData
-        }
-        Add-Content -LiteralPath $dbgPath -Value ($dbgPayload | ConvertTo-Json -Compress -Depth 8) -Encoding utf8
-    }
-    catch { }
-    # #endregion
 
     return [hashtable]$body
 }

@@ -97,11 +97,11 @@ function ConvertTo-IntuneDropWin32LobCreateBody {
         # Graph expects values like Windows10_22H2 / Windows11_23H2 — a bare release label (e.g. 22H2) is rejected by the service.
         'minimumSupportedWindowsRelease' = 'Windows10_22H2'
         'rules'                         = @($detectionRules.ToArray())
+        # v1.0 installExperience: only runAsAccount and deviceRestartBehavior (see Graph docs). maxRunTimeInMinutes is beta-only and broke v1.0 POST in captured payloads.
         'installExperience'             = @{
-            '@odata.type'            = '#microsoft.graph.win32LobAppInstallExperience'
-            'runAsAccount'           = 'system'
-            'maxRunTimeInMinutes'    = 60
-            'deviceRestartBehavior'  = 'suppress'
+            '@odata.type'           = '#microsoft.graph.win32LobAppInstallExperience'
+            'runAsAccount'          = 'system'
+            'deviceRestartBehavior' = 'suppress'
         }
         'returnCodes'                   = @(
             @{ '@odata.type' = '#microsoft.graph.win32LobAppReturnCode'; 'returnCode' = 0; 'type' = 'success' }
@@ -139,11 +139,12 @@ function ConvertTo-IntuneDropWin32LobCreateBody {
             hasMsiInformation     = $body.Keys -contains 'msiInformation'
             installCmdLen         = ($body['installCommandLine']).Length
             uninstallCmdLen       = ($body['uninstallCommandLine']).Length
+            installExpKeys        = @([string[]]@($body['installExperience'].Keys))
         }
         $dbgPayload = [ordered]@{
             sessionId    = '7596d3'
             timestamp    = [int64]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())
-            hypothesisId = 'H1,H3,H4,H6,H7,H10'
+            hypothesisId = 'H1,H3,H4,H6,H10,H11'
             location     = 'ConvertTo-IntuneDropWin32LobCreateBody:end'
             message      = 'win32LobApp create body summary'
             data         = $dbgData

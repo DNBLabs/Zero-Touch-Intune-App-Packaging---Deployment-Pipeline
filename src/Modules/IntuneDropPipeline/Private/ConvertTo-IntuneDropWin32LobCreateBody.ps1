@@ -39,18 +39,14 @@ function ConvertTo-IntuneDropWin32LobCreateBody {
                 $fullPath = [string]$detection.Path
                 $parent = Split-Path -Path $fullPath -Parent
                 $leaf = Split-Path -Path $fullPath -Leaf
-                $fileOperationType = [string]$detection.DetectionType
-                # Allowlist uses "version"; Graph file rules expect operationType appVersion for PE/file version (win32LobAppFileSystemOperationType).
-                if ($fileOperationType -eq 'version') {
-                    $fileOperationType = 'appVersion'
-                }
+                # Graph v1.0 win32LobAppFileSystemOperationType includes version but not appVersion (beta adds appVersion, etc.). Create uses v1.0 in New-IntuneDropWin32LobApp.
                 [void]$detectionRules.Add(@{
                     '@odata.type'          = '#microsoft.graph.win32LobAppFileSystemRule'
                     'ruleType'             = 'detection'
                     'path'                 = $parent
                     'fileOrFolderName'     = $leaf
                     'check32BitOn64System' = $false
-                    'operationType'        = $fileOperationType
+                    'operationType'        = [string]$detection.DetectionType
                     'operator'             = [string]$detection.Operator
                     'comparisonValue'      = [string]$detection.ExpectedValue
                 })
@@ -147,7 +143,7 @@ function ConvertTo-IntuneDropWin32LobCreateBody {
         $dbgPayload = [ordered]@{
             sessionId    = '7596d3'
             timestamp    = [int64]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())
-            hypothesisId = 'H1,H3,H4,H6,H7,H8'
+            hypothesisId = 'H1,H3,H4,H6,H7,H10'
             location     = 'ConvertTo-IntuneDropWin32LobCreateBody:end'
             message      = 'win32LobApp create body summary'
             data         = $dbgData

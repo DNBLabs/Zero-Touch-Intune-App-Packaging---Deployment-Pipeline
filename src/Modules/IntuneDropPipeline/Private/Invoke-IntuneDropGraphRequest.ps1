@@ -68,7 +68,7 @@ function Invoke-IntuneDropGraphRequest {
                 $dbgPayload = [ordered]@{
                     sessionId    = '7596d3'
                     timestamp    = [int64]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())
-                    hypothesisId = 'H2,H5,H9'
+                    hypothesisId = 'H2,H5,H9,H10'
                     location     = 'Invoke-IntuneDropGraphRequest:before Invoke-MgGraphRequest'
                     message      = 'POST mobileApps JSON shape'
                     data         = [ordered]@{

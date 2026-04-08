@@ -10,6 +10,9 @@ staging/
 done/
 failed/
 
+# Test output
+testResults.xml
+
 # OS / editor
 Thumbs.db
 .DS_Store

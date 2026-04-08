@@ -4,6 +4,8 @@ Convention-over-configuration **PowerShell 7** pipeline: drop an allowlisted `.m
 
 ## Status
 
+**Task 11 (portfolio docs)** — Operator checklist and **`tools/Import-IntuneDropEnv.ps1`** below: load `.env` into PowerShell, smoke-test Graph, understand **Intune enrollment** vs Entra-only for app delivery.
+
 **Task 9–10** — `Invoke-IntuneDropInboxSweep` enumerates inbox `*.exe` / `*.msi` and runs `Invoke-IntuneDropForFile` per file (idempotent second pass when the inbox is empty). **`Process-Inbox.ps1 -Once`** is the explicit single-sweep entrypoint. **`Watch-Inbox.ps1`** uses a debounced **FileSystemWatcher** (Created / Changed / Renamed) instead of polling; for large installers, copy under a temporary name in `inbox/` then **rename** to the final `Vendor_AppName_x.y.z.*` so the watcher sees a complete file.
 
 **Task 8** (complete) — Orchestrator: `Invoke-IntuneDropForFile` runs parse → allowlist → pack → Graph create/upload/assign → move the original installer to `done/`; failures after configuration load move to `failed/` with an optional `*.reason.txt`. Use `-NoAutoConnect` on `Invoke-IntuneDropForFile` when you already ran `Connect-IntuneDropGraphSession`.
@@ -20,7 +22,14 @@ Convention-over-configuration **PowerShell 7** pipeline: drop an allowlisted `.m
 
 ## Quick start
 
-Prerequisites: **PowerShell 7+**, **Microsoft.Graph** modules, **IntuneWinAppUtil.exe**, and an **Azure AD app registration** with **DeviceManagementApps.ReadWrite.All** (application, admin consent). Configure env from `.env.example`, then either import the module and call `Invoke-IntuneDropForFile`, or run a drop-folder sweep:
+Prerequisites: **PowerShell 7+**, **Microsoft.Graph** modules, **IntuneWinAppUtil.exe**, and an **Entra app registration** with **DeviceManagementApps.ReadWrite.All** (application, admin consent). Copy **`.env.example`** → **`.env`**, fill in values, then **load variables into this PowerShell session** (files on disk are not read automatically):
+
+```powershell
+Set-Location <path-to-repo-root>
+pwsh -File .\tools\Import-IntuneDropEnv.ps1
+```
+
+Then run a drop-folder sweep (from the same session):
 
 ```powershell
 # One pass: every .exe/.msi in the configured inbox (repeat when the inbox is empty → no work)
@@ -44,12 +53,21 @@ See `docs/SPEC.md` for step-by-step and edge cases.
 4. Optionally add **`config.local.json`** at the repo root (listed in `.gitignore` — do not commit) to override **path** keys only: `INTUNE_DROP_INBOX_PATH`, `INTUNE_DROP_DONE_PATH`, `INTUNE_DROP_FAILED_PATH`, `INTUNE_DROP_STAGING_PATH`. Process environment variables override those JSON values when both are set.
 5. Never commit `.env`, PFX files, or real secrets.
 
-Load the module after setting process env (for example by dot-sourcing `.env` in your shell, or exporting variables manually):
+After **`Import-IntuneDropEnv.ps1`** (or your own `Set-Item Env:...` commands), verify configuration:
 
 ```powershell
 Import-Module .\src\Modules\IntuneDropPipeline\IntuneDropPipeline.psd1 -Force
 Get-IntuneDropConfiguration
 ```
+
+### End-to-end lab checklist (first successful drop)
+
+1. **Env:** `Import-IntuneDropEnv.ps1` → `Get-IntuneDropConfiguration` succeeds (no “missing variable” error).
+2. **Graph:** `Connect-IntuneDropGraphSession -UseConfiguration` → `Get-MgContext` shows your tenant → `Disconnect-MgGraph` when done testing.
+3. **Group:** `INTUNE_DROP_TEST_GROUP_ID` is the Entra **security group** **Object ID** that will receive assignments; add **users** or **devices** you intend to target.
+4. **Drop:** Place `Vendor_AppName_x.y.z.exe` or `.msi` in **`inbox/`** → `pwsh -File .\src\Process-Inbox.ps1 -Once` → installer moves to **`done/`** (or **`failed/`** with a reason file).
+5. **Intune portal:** App appears under **Apps**; **Assignments** shows your group. **Device install status** / **Monitor** shows per-device results.
+6. **Clients:** A PC must be **enrolled in Intune (MDM)**, not only “connected to Entra ID” on the account. **Settings → Access work or school** as an **administrator** to enroll or sync; until the device appears under **Intune → Devices**, Win32 apps from this pipeline will not install there.
 
 ## Filename convention
 
@@ -95,6 +113,6 @@ inbox/       # Drop allowlisted installers here (tracked empty via .gitkeep)
 staging/     # Created at runtime; gitignored
 done/        # Successfully processed files; gitignored
 failed/      # Rejected files; gitignored
-tools/       # Readme only — place IntuneWinAppUtil locally, do not commit it
+tools/       # Import-IntuneDropEnv.ps1 + readme; place IntuneWinAppUtil locally, do not commit it
 docs/        # Specs and plans
 ```

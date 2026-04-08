@@ -161,10 +161,10 @@ function Get-DropPackageFromFileName {
 
 ## Open Questions
 
-1. **Exact filename regex** — Confirm final pattern (underscore vs hyphen, semantic versioning only vs four-part versions).
-2. **Detection rule strategy for MSI** — Product code from MSI metadata vs file-version heuristic; MVP likely **MSI product code** via **Windows Installer API** or external tool — pick one and document **constraint** (may add small Windows-only dependency for MSI reading).
-3. **Which two demo apps** lock the allowlist for v1 (names redistributable in public README)?
-4. **Graph API surface** — Confirm **stable** vs **beta** endpoints required for Win32 LOB upload in target tenant; document SKU/intent limitations in README.
+1. **Exact filename regex** — **Resolved for v1:** `Vendor_AppName_x.y.z.msi|exe` (no underscores inside vendor/app segments; version 2–4 numeric segments). See README and `Get-IntuneDropPackageFromFileName`.
+2. **Detection rule strategy for MSI** — **Resolved:** **ProductCode** via Windows Installer COM on Windows (`Get-IntuneDropMsiProductCode`); non-Windows / COM failure → `ERR_MSI_METADATA`.
+3. **Which two demo apps** lock the allowlist for v1 (names redistributable in public README)? — **Open:** portfolio uses generic allowlist rows; operators supply their own installers under the naming convention.
+4. **Graph API surface** — **Resolved for this repo:** **beta** `deviceAppManagement` paths for Win32 LOB create, content upload, and assignments; confirm against [Microsoft Graph beta Intune](https://learn.microsoft.com/graph/api/resources/intune-graph-overview) if your tenant or national cloud differs.
 
 ---
 

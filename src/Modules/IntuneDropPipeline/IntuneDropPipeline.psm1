@@ -49,6 +49,7 @@ Export-ModuleMember -Function @(
     'Get-IntuneDropMsiProductCode'
     'Get-IntuneDropPackageFromFileName'
     'Invoke-IntuneDropForFile'
+    'Invoke-IntuneDropInboxSweep'
     'New-IntuneDropWin32LobApp'
     'New-IntuneDropWin32LobGroupAssignment'
     'New-IntuneDropWin32Package'

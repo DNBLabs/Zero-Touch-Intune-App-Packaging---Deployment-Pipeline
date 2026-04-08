@@ -11,6 +11,9 @@ function Invoke-IntuneDropInboxSweep {
     param()
 
     $configuration = Get-IntuneDropConfiguration
+    Write-IntuneDropLog -Level Info -Message (
+        "Configuration: inbox '{0}', staging '{1}'." -f $configuration.InboxPath, $configuration.StagingPath
+    ) -RuleId 'CONFIG_PATHS'
     $extensions = @('.exe', '.msi')
 
     Get-ChildItem -LiteralPath $configuration.InboxPath -File -ErrorAction SilentlyContinue |

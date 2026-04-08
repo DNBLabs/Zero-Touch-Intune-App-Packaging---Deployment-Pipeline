@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
-    Creates a win32LobApp object in Intune via Microsoft Graph beta APIs.
+    Creates a win32LobApp object in Intune via Microsoft Graph.
 .DESCRIPTION
-    Combines install intent from the allowlist with IntuneWin metadata (setup file name, size, encryption profile) to POST /deviceAppManagement/mobileApps. You must connect with Connect-IntuneDropGraphSession first and grant DeviceManagementApps.ReadWrite.All (application permission with admin consent).
+    POSTs to Graph v1.0 /deviceAppManagement/mobileApps (Microsoft recommends v1 for Intune over beta). Content upload, commit, and some assignments still use beta endpoints elsewhere in this module. Combine with IntuneWin metadata from packaging. Call Connect-IntuneDropGraphSession first with DeviceManagementApps.ReadWrite.All (app permission + admin consent).
 .PARAMETER InstallIntent
     Output from Get-IntuneDropInstallIntent. For MSI packages, include a populated ProductCode on Detection before calling this command.
 .PARAMETER IntuneWinPath
@@ -30,7 +30,7 @@ function New-IntuneDropWin32LobApp {
         -IntuneWinFileName $fileItem.Name `
         -IntuneWinFileLengthBytes $fileItem.Length
 
-    $createUri = 'https://graph.microsoft.com/beta/deviceAppManagement/mobileApps'
+    $createUri = 'https://graph.microsoft.com/v1.0/deviceAppManagement/mobileApps'
     $response = Invoke-IntuneDropGraphRequest -Method POST -Uri $createUri -Body $createBody
 
     [pscustomobject]@{

@@ -69,7 +69,7 @@ PowerShellVersion = '7.0'
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = 'Connect-IntuneDropGraphSession', 'Disconnect-IntuneDropGraphSession', 'Get-IntuneDropConfiguration', 'Get-IntuneDropInstallIntent', 'Get-IntuneDropMsiProductCode', 'Get-IntuneDropPackageFromFileName', 'New-IntuneDropWin32LobApp', 'New-IntuneDropWin32LobGroupAssignment', 'New-IntuneDropWin32Package', 'Publish-IntuneDropWin32LobIntuneWinContent', 'Write-IntuneDropLog'
+FunctionsToExport = 'Connect-IntuneDropGraphSession', 'Disconnect-IntuneDropGraphSession', 'Get-IntuneDropConfiguration', 'Get-IntuneDropInstallIntent', 'Get-IntuneDropMsiProductCode', 'Get-IntuneDropPackageFromFileName', 'Invoke-IntuneDropForFile', 'New-IntuneDropWin32LobApp', 'New-IntuneDropWin32LobGroupAssignment', 'New-IntuneDropWin32Package', 'Publish-IntuneDropWin32LobIntuneWinContent', 'Write-IntuneDropLog'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()

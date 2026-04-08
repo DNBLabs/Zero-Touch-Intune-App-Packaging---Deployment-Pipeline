@@ -13,6 +13,7 @@ $privateScriptLoadOrder = @(
     'New-IntuneDropPackagingErrorRecord.ps1'
     'New-IntuneDropGraphErrorRecord.ps1'
     'Get-IntuneDropIntuneWinPackageMetadata.ps1'
+    'Get-IntuneDropMgContext.ps1'
     'Invoke-IntuneDropGraphRequest.ps1'
     'Invoke-IntuneDropAzureBlobSinglePut.ps1'
     'ConvertTo-IntuneDropWin32LobCreateBody.ps1'
@@ -24,6 +25,7 @@ $privateScriptLoadOrder = @(
     'Expand-IntuneDropTemplate.ps1'
     'ConvertTo-IntuneDropDetectionSpec.ps1'
     'Resolve-IntuneDropAllowlistMatch.ps1'
+    'Move-IntuneDropInstallerToOutcomeFolder.ps1'
 )
 
 foreach ($privateFileName in $privateScriptLoadOrder) {
@@ -46,6 +48,7 @@ Export-ModuleMember -Function @(
     'Get-IntuneDropInstallIntent'
     'Get-IntuneDropMsiProductCode'
     'Get-IntuneDropPackageFromFileName'
+    'Invoke-IntuneDropForFile'
     'New-IntuneDropWin32LobApp'
     'New-IntuneDropWin32LobGroupAssignment'
     'New-IntuneDropWin32Package'

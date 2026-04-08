@@ -4,7 +4,9 @@ Convention-over-configuration **PowerShell 7** pipeline: drop an allowlisted `.m
 
 ## Status
 
-**Task 7** — Microsoft Graph (**beta**): `Connect-IntuneDropGraphSession` (app client secret), `New-IntuneDropWin32LobApp`, `Publish-IntuneDropWin32LobIntuneWinContent` (SAS upload + commit + `committedContentVersion`), `New-IntuneDropWin32LobGroupAssignment`, `Disconnect-IntuneDropGraphSession`. Requires `Install-Module Microsoft.Graph` (see [Microsoft Graph PowerShell SDK](https://learn.microsoft.com/powershell/microsoftgraph/installation)). App registration needs **Application** permission **DeviceManagementApps.ReadWrite.All** (admin consent). Graph failures surface **`ERR_GRAPH`**. Unit tests mock `Invoke-IntuneDropGraphRequest` / blob PUT. Entry scripts (orchestrator) arrive in a later task.
+**Task 8** — Orchestrator: `Invoke-IntuneDropForFile` runs parse → allowlist → pack → Graph create/upload/assign → move the original installer to `done/`; failures after configuration load move to `failed/` with an optional `*.reason.txt`. Entry scripts: `src/Process-Inbox.ps1` (one sweep over the inbox) and `src/Watch-Inbox.ps1` (polling loop). Use `-NoAutoConnect` on `Invoke-IntuneDropForFile` when you already ran `Connect-IntuneDropGraphSession`.
+
+**Task 7** (complete) — Microsoft Graph (**beta**): `Connect-IntuneDropGraphSession`, `New-IntuneDropWin32LobApp`, `Publish-IntuneDropWin32LobIntuneWinContent`, `New-IntuneDropWin32LobGroupAssignment`, `Disconnect-IntuneDropGraphSession`. Requires `Install-Module Microsoft.Graph` (see [Microsoft Graph PowerShell SDK](https://learn.microsoft.com/powershell/microsoftgraph/installation)). App registration needs **Application** permission **DeviceManagementApps.ReadWrite.All** (admin consent). Graph failures surface **`ERR_GRAPH`**. Unit tests mock `Invoke-IntuneDropGraphRequest` / blob PUT.
 
 ## Documentation
 
@@ -14,9 +16,19 @@ Convention-over-configuration **PowerShell 7** pipeline: drop an allowlisted `.m
 | [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md) | Dependency order, tasks, checkpoints |
 | [docs/ideas/drop-folder-intune-convention.md](docs/ideas/drop-folder-intune-convention.md) | Original concept one-pager |
 
-## Quick start (after implementation is complete)
+## Quick start
 
-Prerequisites will include **PowerShell 7+**, the **Microsoft.Graph** modules, locally installed **IntuneWinAppUtil.exe**, and an **Azure AD app registration** with appropriate Graph permissions. Follow `docs/SPEC.md` for exact commands; until `src/` exists, there is nothing to run beyond validating this scaffold.
+Prerequisites: **PowerShell 7+**, **Microsoft.Graph** modules, **IntuneWinAppUtil.exe**, and an **Azure AD app registration** with **DeviceManagementApps.ReadWrite.All** (application, admin consent). Configure env from `.env.example`, then either import the module and call `Invoke-IntuneDropForFile`, or run a drop-folder sweep:
+
+```powershell
+# One pass: every .exe/.msi in the configured inbox
+pwsh -File .\src\Process-Inbox.ps1
+
+# Simple polling demo (Ctrl+C to stop)
+pwsh -File .\src\Watch-Inbox.ps1 -PollIntervalSeconds 30
+```
+
+See `docs/SPEC.md` for step-by-step and edge cases.
 
 ## Configuration
 

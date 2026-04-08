@@ -40,7 +40,11 @@ function Resolve-IntuneDropGraphCertificate {
             $storePath = Join-Path -Path 'Cert:' -ChildPath ($locationName + '\My')
             $matches = @(Get-ChildItem -Path $storePath -ErrorAction SilentlyContinue | Where-Object { $null -ne $_.Thumbprint -and ($_.Thumbprint.ToUpperInvariant() -eq $normalized) })
             if ($matches.Count -gt 0) {
-                return [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($matches[0].RawData)
+                $fromStore = $matches[0]
+                if (-not $fromStore.HasPrivateKey) {
+                    throw "Certificate thumbprint '$normalized' under '$storePath' has no private key. Import the Entra app PFX (full key pair) into this store, not only the public .cer."
+                }
+                return $fromStore
             }
         }
 

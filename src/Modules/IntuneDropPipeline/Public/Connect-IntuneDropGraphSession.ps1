@@ -57,7 +57,9 @@ function Connect-IntuneDropGraphSession {
                 Connect-MgGraph -TenantId $TenantId -ClientId $ClientId -Certificate $certificate -NoWelcome -ErrorAction Stop
             }
             finally {
-                $certificate.Dispose()
+                if (-not [string]::IsNullOrWhiteSpace($configuration.AzureClientCertificatePath)) {
+                    $certificate.Dispose()
+                }
             }
             return
         }

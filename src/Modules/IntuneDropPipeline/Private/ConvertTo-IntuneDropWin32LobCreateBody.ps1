@@ -28,8 +28,11 @@ function ConvertTo-IntuneDropWin32LobCreateBody {
                     $PSCmdlet.ThrowTerminatingError($record)
                 }
                 [void]$detectionRules.Add(@{
-                    '@odata.type' = '#microsoft.graph.win32LobAppProductCodeDetection'
-                    'productCode' = [string]$detection.ProductCode
+                    '@odata.type'            = '#microsoft.graph.win32LobAppProductCodeRule'
+                    'ruleType'               = 'detection'
+                    'productCode'            = [string]$detection.ProductCode
+                    'productVersionOperator' = 'notConfigured'
+                    'productVersion'         = ''
                 })
             }
             'file' {
@@ -37,13 +40,14 @@ function ConvertTo-IntuneDropWin32LobCreateBody {
                 $parent = Split-Path -Path $fullPath -Parent
                 $leaf = Split-Path -Path $fullPath -Leaf
                 [void]$detectionRules.Add(@{
-                    '@odata.type'         = '#microsoft.graph.win32LobAppFileSystemDetection'
-                    'path'                = $parent
-                    'fileOrFolderName'    = $leaf
+                    '@odata.type'          = '#microsoft.graph.win32LobAppFileSystemRule'
+                    'ruleType'             = 'detection'
+                    'path'                 = $parent
+                    'fileOrFolderName'     = $leaf
                     'check32BitOn64System' = $false
-                    'detectionType'       = [string]$detection.DetectionType
-                    'operator'            = [string]$detection.Operator
-                    'detectionValue'      = [string]$detection.ExpectedValue
+                    'operationType'        = [string]$detection.DetectionType
+                    'operator'             = [string]$detection.Operator
+                    'comparisonValue'      = [string]$detection.ExpectedValue
                 })
             }
             Default {
@@ -66,10 +70,10 @@ function ConvertTo-IntuneDropWin32LobCreateBody {
     $msiBlock = $null
     if (($InstallIntent.Package.Extension -eq 'msi') -and $null -ne $InstallIntent.Detection -and ($InstallIntent.Detection.RuleType -eq 'msiProductCode')) {
         $msiBlock = @{
-            '@odata.type'   = 'microsoft.graph.win32LobAppMsiInformation'
-            'packageType'   = 'perMachine'
-            'productCode'   = [string]$InstallIntent.Detection.ProductCode
-            'requiresReboot'= $false
+            '@odata.type'    = '#microsoft.graph.win32LobAppMsiInformation'
+            'packageType'    = 'perMachine'
+            'productCode'    = [string]$InstallIntent.Detection.ProductCode
+            'requiresReboot' = $false
         }
     }
 
@@ -91,15 +95,16 @@ function ConvertTo-IntuneDropWin32LobCreateBody {
         'minimumSupportedWindowsRelease' = '22H2'
         'rules'                         = @($detectionRules.ToArray())
         'installExperience'             = @{
-            'runAsAccount'           = 'system'
+            '@odata.type'           = '#microsoft.graph.win32LobAppInstallExperience'
+            'runAsAccount'          = 'system'
             'deviceRestartBehavior' = 'suppress'
         }
         'returnCodes'                   = @(
-            @{ 'returnCode' = 0; 'type' = 'success' }
-            @{ 'returnCode' = 1707; 'type' = 'softReboot' }
-            @{ 'returnCode' = 3010; 'type' = 'softReboot' }
-            @{ 'returnCode' = 1641; 'type' = 'hardReboot' }
-            @{ 'returnCode' = 1618; 'type' = 'retry' }
+            @{ '@odata.type' = '#microsoft.graph.win32LobAppReturnCode'; 'returnCode' = 0; 'type' = 'success' }
+            @{ '@odata.type' = '#microsoft.graph.win32LobAppReturnCode'; 'returnCode' = 1707; 'type' = 'softReboot' }
+            @{ '@odata.type' = '#microsoft.graph.win32LobAppReturnCode'; 'returnCode' = 3010; 'type' = 'softReboot' }
+            @{ '@odata.type' = '#microsoft.graph.win32LobAppReturnCode'; 'returnCode' = 1641; 'type' = 'hardReboot' }
+            @{ '@odata.type' = '#microsoft.graph.win32LobAppReturnCode'; 'returnCode' = 1618; 'type' = 'retry' }
         )
     }
 

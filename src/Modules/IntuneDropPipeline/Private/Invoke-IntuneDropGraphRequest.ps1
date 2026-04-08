@@ -57,9 +57,14 @@ function Invoke-IntuneDropGraphRequest {
         return Invoke-MgGraphRequest @invokeParams
     }
     catch {
-        $safe = $_.Exception.Message
-        if ($safe.Length -gt 4000) {
-            $safe = $safe.Substring(0, 4000) + '...'
+        $parts = [System.Collections.Generic.List[string]]::new()
+        $parts.Add($_.Exception.Message)
+        if ($null -ne $_.ErrorDetails -and -not [string]::IsNullOrWhiteSpace([string]$_.ErrorDetails.Message)) {
+            $parts.Add([string]$_.ErrorDetails.Message.Trim())
+        }
+        $safe = (($parts | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) | Select-Object -Unique) -join ' | '
+        if ($safe.Length -gt 6000) {
+            $safe = $safe.Substring(0, 6000) + '...'
         }
         $record = New-IntuneDropGraphErrorRecord -Message "Graph request failed ($Method $Uri): $safe" -TargetObject $Uri
         $PSCmdlet.ThrowTerminatingError($record)

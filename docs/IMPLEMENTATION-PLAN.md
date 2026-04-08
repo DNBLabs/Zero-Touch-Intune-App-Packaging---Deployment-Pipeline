@@ -325,18 +325,18 @@ Each slice should stay **working** after its checkpoint (tests green; manual ste
 
 #### Task 11: README and manual lab checklist
 
-**Description:** Finalize operator setup: Entra app registration, **Application** permissions, admin consent, convention table, demo apps, troubleshooting, commands aligned with `SPEC.md`. Run `Invoke-ScriptAnalyzer` on `src/`. Close applicable **Open Questions** in `SPEC.md`.
+**Description:** Finalize operator setup: Entra app registration, **Application** permissions, admin consent, convention table, demo apps, troubleshooting, commands aligned with `SPEC.md`. Run `Invoke-ScriptAnalyzer` on `src/` with **`PSScriptAnalyzerSettings.psd1`** (excludes the env-only `ConvertTo-SecureString -AsPlainText` rule for Graph client secret). Close applicable **Open Questions** in `SPEC.md`.
 
 **Acceptance criteria:**
 
-- [ ] README matches `.env.example` keys and folder layout.
-- [ ] `Invoke-ScriptAnalyzer -Path .\src -Recurse -Severity @('Error','Warning')` produces **zero** errors (warnings documented or fixed).
+- [x] README matches `.env.example` keys and folder layout.
+- [x] `Invoke-ScriptAnalyzer -Path .\src -Recurse -Settings .\PSScriptAnalyzerSettings.psd1 -Severity Error` produces **zero** errors (remaining warnings documented in README **Development**).
 - [ ] Second-person dry-run (you or peer) completes checklist without guesswork.
 
 **Verification:**
 
 - [ ] Analyzer output saved or pasted in PR notes (optional).
-- [ ] `SPEC.md` Open Questions updated for decisions made.
+- [x] `SPEC.md` Open Questions updated for decisions made.
 
 **Dependencies:** Tasks 1–10
 

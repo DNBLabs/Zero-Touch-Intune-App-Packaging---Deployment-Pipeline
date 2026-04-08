@@ -116,3 +116,18 @@ failed/      # Rejected files; gitignored
 tools/       # Import-IntuneDropEnv.ps1 + readme; place IntuneWinAppUtil locally, do not commit it
 docs/        # Specs and plans
 ```
+
+## Development
+
+```powershell
+Set-Location <path-to-repo-root>
+Invoke-Pester .\tests
+```
+
+Static analysis (use the repo **`PSScriptAnalyzerSettings.psd1`** so `Connect-IntuneDropGraphSession`’s env-based client secret → `SecureString` is not flagged as plaintext misuse):
+
+```powershell
+Invoke-ScriptAnalyzer -Path .\src -Recurse -Settings .\PSScriptAnalyzerSettings.psd1 -Severity Error
+```
+
+Warnings (BOM, `ShouldProcess`, singular nouns) are accepted for v1 unless you tighten style in a follow-up change.

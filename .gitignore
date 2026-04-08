@@ -13,6 +13,9 @@ failed/
 # Test output
 testResults.xml
 
+# Local debug NDJSON (agent triage)
+debug-7596d3.log
+
 # OS / editor
 Thumbs.db
 .DS_Store

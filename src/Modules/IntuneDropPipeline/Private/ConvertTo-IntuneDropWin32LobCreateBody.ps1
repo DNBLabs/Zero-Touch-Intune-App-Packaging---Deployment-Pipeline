@@ -90,9 +90,11 @@ function ConvertTo-IntuneDropWin32LobCreateBody {
         'size'                           = [long]$sizeValue
         'installCommandLine'             = [string]$InstallIntent.InstallCommandLine
         'uninstallCommandLine'           = [string]$InstallIntent.UninstallCommandLine
-        'applicableArchitectures'       = 'x64'
-        'allowedArchitectures'          = 'x64'
-        'minimumSupportedWindowsRelease' = '22H2'
+        # When allowedArchitectures is set, Graph sets applicableArchitectures to none; send that pair explicitly to avoid validation issues.
+        'applicableArchitectures'        = 'none'
+        'allowedArchitectures'           = 'x64'
+        # Graph expects values like Windows10_22H2 / Windows11_23H2 — a bare release label (e.g. 22H2) is rejected by the service.
+        'minimumSupportedWindowsRelease' = 'Windows10_22H2'
         'rules'                         = @($detectionRules.ToArray())
         'installExperience'             = @{
             '@odata.type'           = '#microsoft.graph.win32LobAppInstallExperience'

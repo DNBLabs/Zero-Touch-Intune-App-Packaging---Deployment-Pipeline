@@ -17,6 +17,10 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+$repoRoot = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath '..'))
+$dotEnvScript = Join-Path -Path $PSScriptRoot -ChildPath 'Import-IntuneDropRepoDotEnv.ps1'
+& $dotEnvScript -RepositoryRoot $repoRoot
+
 $moduleRoot = $PSScriptRoot
 $manifestPath = Join-Path -Path $moduleRoot -ChildPath 'Modules\IntuneDropPipeline\IntuneDropPipeline.psd1'
 

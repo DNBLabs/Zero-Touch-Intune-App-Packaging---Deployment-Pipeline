@@ -15,6 +15,10 @@ if (-not $Once) {
     throw 'Process-Inbox.ps1 requires -Once. Example: pwsh -File .\src\Process-Inbox.ps1 -Once'
 }
 
+$repoRoot = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath '..'))
+$dotEnvScript = Join-Path -Path $PSScriptRoot -ChildPath 'Import-IntuneDropRepoDotEnv.ps1'
+& $dotEnvScript -RepositoryRoot $repoRoot
+
 $moduleRoot = $PSScriptRoot
 $manifestPath = Join-Path -Path $moduleRoot -ChildPath 'Modules\IntuneDropPipeline\IntuneDropPipeline.psd1'
 

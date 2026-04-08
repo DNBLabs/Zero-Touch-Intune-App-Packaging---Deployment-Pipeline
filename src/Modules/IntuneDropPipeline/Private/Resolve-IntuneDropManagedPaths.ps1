@@ -7,6 +7,8 @@
     Hashtable with keys INTUNE_DROP_INBOX_PATH, INTUNE_DROP_DONE_PATH, INTUNE_DROP_FAILED_PATH, INTUNE_DROP_STAGING_PATH.
 .DESCRIPTION
     Merge order: repository defaults, then non-secret keys from config.local.json at the repo root if present, then process environment variables for those keys (environment wins).
+
+    Default staging uses <RepositoryRoot>\staging unless the repository path contains an ampersand (&). Microsoft IntuneWinAppUtil.exe fails to read the setup file when -c/-o paths include &, so in that case the default staging root is %LOCALAPPDATA%\IntuneDropPipeline\staging instead. Overrides via config.local.json or INTUNE_DROP_STAGING_PATH still apply.
 #>
 function Resolve-IntuneDropManagedPaths {
     [CmdletBinding()]
@@ -27,7 +29,12 @@ function Resolve-IntuneDropManagedPaths {
     $pathValues['INTUNE_DROP_INBOX_PATH'] = Join-Path -Path $RepositoryRoot -ChildPath 'inbox'
     $pathValues['INTUNE_DROP_DONE_PATH'] = Join-Path -Path $RepositoryRoot -ChildPath 'done'
     $pathValues['INTUNE_DROP_FAILED_PATH'] = Join-Path -Path $RepositoryRoot -ChildPath 'failed'
-    $pathValues['INTUNE_DROP_STAGING_PATH'] = Join-Path -Path $RepositoryRoot -ChildPath 'staging'
+    $defaultStagingRoot = $RepositoryRoot
+    if ($RepositoryRoot.Contains('&')) {
+        $localAppData = [Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData)
+        $defaultStagingRoot = Join-Path -Path $localAppData -ChildPath 'IntuneDropPipeline'
+    }
+    $pathValues['INTUNE_DROP_STAGING_PATH'] = Join-Path -Path $defaultStagingRoot -ChildPath 'staging'
 
     $localConfigPath = Join-Path -Path $RepositoryRoot -ChildPath 'config.local.json'
     if (Test-Path -LiteralPath $localConfigPath) {

@@ -30,6 +30,8 @@ Describe 'ConvertTo-IntuneDropWin32LobCreateBody' {
             $body.minimumSupportedWindowsRelease | Should -Be 'Windows10_22H2'
             $body.applicableArchitectures | Should -Be 'x64'
             $body.allowedArchitectures | Should -Be 'x64'
+            $body.Keys | Should -Not -Contain 'size'
+            $body.installExperience.maxRunTimeInMinutes | Should -Be 60
         } -ArgumentList $intent, ([pscustomobject]@{
                 SetupFileName          = 'Fabrikam_App_2.0.exe'
                 UnencryptedContentSize = [long]999

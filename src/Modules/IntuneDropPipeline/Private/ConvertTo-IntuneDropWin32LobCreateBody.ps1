@@ -87,7 +87,7 @@ function ConvertTo-IntuneDropWin32LobCreateBody {
         'displayVersion'                 = [string]$InstallIntent.Package.Version
         'fileName'                       = $IntuneWinFileName
         'setupFilePath'                  = [string]$IntuneWinMetadata.SetupFileName
-        'size'                           = [long]$sizeValue
+        # Do not set mobileLobApp.size on create (read-only in Graph); upload sets size on mobileAppContentFile. Still 400 when size was included after x64/x64 fix.
         'installCommandLine'             = [string]$InstallIntent.InstallCommandLine
         'uninstallCommandLine'           = [string]$InstallIntent.UninstallCommandLine
         # Match Microsoft Graph win32LobApp create examples (matching x64/x64 or x86/x86); explicit applicable none with allowed x64 produced 400 from Intune.
@@ -97,9 +97,10 @@ function ConvertTo-IntuneDropWin32LobCreateBody {
         'minimumSupportedWindowsRelease' = 'Windows10_22H2'
         'rules'                         = @($detectionRules.ToArray())
         'installExperience'             = @{
-            '@odata.type'           = '#microsoft.graph.win32LobAppInstallExperience'
-            'runAsAccount'          = 'system'
-            'deviceRestartBehavior' = 'suppress'
+            '@odata.type'            = '#microsoft.graph.win32LobAppInstallExperience'
+            'runAsAccount'           = 'system'
+            'maxRunTimeInMinutes'    = 60
+            'deviceRestartBehavior'  = 'suppress'
         }
         'returnCodes'                   = @(
             @{ '@odata.type' = '#microsoft.graph.win32LobAppReturnCode'; 'returnCode' = 0; 'type' = 'success' }
@@ -124,7 +125,8 @@ function ConvertTo-IntuneDropWin32LobCreateBody {
             extension             = [string]$InstallIntent.Package.Extension
             setupFilePath         = [string]$body['setupFilePath']
             fileName              = [string]$body['fileName']
-            size                  = [long]$body['size']
+            createBodyOmitsSize   = -not ($body.Keys -contains 'size')
+            unencryptedSizeOrFile = [long]$sizeValue
             minWinRelease         = [string]$body['minimumSupportedWindowsRelease']
             applicableArch        = [string]$body['applicableArchitectures']
             allowedArch           = [string]$body['allowedArchitectures']
@@ -139,7 +141,7 @@ function ConvertTo-IntuneDropWin32LobCreateBody {
         $dbgPayload = [ordered]@{
             sessionId    = '7596d3'
             timestamp    = [int64]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())
-            hypothesisId = 'H1,H3,H4'
+            hypothesisId = 'H1,H3,H4,H6,H7'
             location     = 'ConvertTo-IntuneDropWin32LobCreateBody:end'
             message      = 'win32LobApp create body summary'
             data         = $dbgData

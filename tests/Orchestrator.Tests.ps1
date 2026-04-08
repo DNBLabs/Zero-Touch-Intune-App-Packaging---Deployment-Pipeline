@@ -52,7 +52,10 @@ Describe 'Invoke-IntuneDropForFile' {
                 'INTUNE_DROP_TEST_GROUP_ID',
                 'AZURE_TENANT_ID',
                 'AZURE_CLIENT_ID',
-                'AZURE_CLIENT_SECRET'
+                'AZURE_CLIENT_SECRET',
+                'AZURE_CLIENT_CERTIFICATE_THUMBPRINT',
+                'AZURE_CLIENT_CERTIFICATE_PATH',
+                'AZURE_CLIENT_CERTIFICATE_PASSWORD'
             )) {
             $script:savedEnv[$key] = [Environment]::GetEnvironmentVariable($key, 'Process')
         }
@@ -85,6 +88,8 @@ Describe 'Invoke-IntuneDropForFile' {
         $env:INTUNE_DROP_TEST_GROUP_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
         $env:AZURE_TENANT_ID = '11111111-1111-1111-1111-111111111111'
         $env:AZURE_CLIENT_ID = '22222222-2222-2222-2222-222222222222'
+        Remove-Item Env:AZURE_CLIENT_CERTIFICATE_THUMBPRINT -ErrorAction SilentlyContinue
+        Remove-Item Env:AZURE_CLIENT_CERTIFICATE_PATH -ErrorAction SilentlyContinue
         $env:AZURE_CLIENT_SECRET = 'unit-test-secret'
 
         $installerPath = Join-Path -Path $inbox -ChildPath 'Fabrikam_App_1.0.0.exe'
@@ -133,6 +138,8 @@ Describe 'Invoke-IntuneDropForFile' {
         $env:INTUNE_DROP_TEST_GROUP_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
         $env:AZURE_TENANT_ID = '11111111-1111-1111-1111-111111111111'
         $env:AZURE_CLIENT_ID = '22222222-2222-2222-2222-222222222222'
+        Remove-Item Env:AZURE_CLIENT_CERTIFICATE_THUMBPRINT -ErrorAction SilentlyContinue
+        Remove-Item Env:AZURE_CLIENT_CERTIFICATE_PATH -ErrorAction SilentlyContinue
         $env:AZURE_CLIENT_SECRET = 'unit-test-secret'
 
         $installerPath = Join-Path -Path $inbox -ChildPath 'setup.exe'

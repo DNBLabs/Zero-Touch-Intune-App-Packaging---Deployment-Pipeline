@@ -35,9 +35,14 @@ See `docs/SPEC.md` for step-by-step and edge cases.
 ## Configuration
 
 1. Copy `.env.example` to `.env`.
-2. Set `INTUNE_DROP_PREP_TOOL_EXE` and Graph-related variables. See [tools/README.md](tools/README.md) for where to place the packaging tool.
-3. Optionally add **`config.local.json`** at the repo root (listed in `.gitignore` — do not commit) to override **path** keys only: `INTUNE_DROP_INBOX_PATH`, `INTUNE_DROP_DONE_PATH`, `INTUNE_DROP_FAILED_PATH`, `INTUNE_DROP_STAGING_PATH`. Process environment variables override those JSON values when both are set.
-4. Never commit `.env` or real secrets.
+2. Set `INTUNE_DROP_PREP_TOOL_EXE` and Entra/Graph variables. See [tools/README.md](tools/README.md) for where to place the packaging tool.
+3. **Graph application credential (pick exactly one in `.env`):**  
+   **Preferred:** `AZURE_CLIENT_CERTIFICATE_THUMBPRINT` after you upload a cert to the app registration and import the matching PFX into `Cert:\CurrentUser\My` or `Cert:\LocalMachine\My` (pipeline searches both).  
+   **Or:** `AZURE_CLIENT_CERTIFICATE_PATH` to a PFX file kept outside the repo, with optional `AZURE_CLIENT_CERTIFICATE_PASSWORD`.  
+   **Legacy/lab:** `AZURE_CLIENT_SECRET` only if you are not using certificate auth.  
+   In Entra: **App registrations → your app → Certificates & secrets → Certificates** — upload a public key (create a suitable code-signing or SSL-style cert for app auth per your org; for a lab you can generate a self-signed PFX, upload the **.cer** public part, and import the PFX on the packaging host). Grant **Application** permission **DeviceManagementApps.ReadWrite.All** and **admin consent**, same as before.
+4. Optionally add **`config.local.json`** at the repo root (listed in `.gitignore` — do not commit) to override **path** keys only: `INTUNE_DROP_INBOX_PATH`, `INTUNE_DROP_DONE_PATH`, `INTUNE_DROP_FAILED_PATH`, `INTUNE_DROP_STAGING_PATH`. Process environment variables override those JSON values when both are set.
+5. Never commit `.env`, PFX files, or real secrets.
 
 Load the module after setting process env (for example by dot-sourcing `.env` in your shell, or exporting variables manually):
 
@@ -77,7 +82,7 @@ New-IntuneDropWin32Package -InstallerPath (Join-Path $c.InboxPath 'Contoso_App_1
 ### Graph publish (lab checklist)
 
 1. `Install-Module Microsoft.Graph -Scope CurrentUser`
-2. `Connect-IntuneDropGraphSession -UseConfiguration` (loads tenant/app from env).
+2. `Connect-IntuneDropGraphSession -UseConfiguration` (uses certificate or client secret from env per **Configuration** above).
 3. Build `$intent` (with MSI **ProductCode** filled for `.msi`), `$pack = New-IntuneDropWin32Package ...`, `$app = New-IntuneDropWin32LobApp -InstallIntent $intent -IntuneWinPath $pack.IntuneWinPath`, `Publish-IntuneDropWin32LobIntuneWinContent -MobileAppId $app.Id -IntuneWinPath $pack.IntuneWinPath`, `New-IntuneDropWin32LobGroupAssignment -MobileAppId $app.Id -GroupId $c.TestGroupId`.
 4. `Disconnect-IntuneDropGraphSession` when finished.
 

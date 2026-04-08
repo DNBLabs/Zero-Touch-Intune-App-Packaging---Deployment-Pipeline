@@ -25,6 +25,7 @@ $privateScriptLoadOrder = @(
     'Expand-IntuneDropTemplate.ps1'
     'ConvertTo-IntuneDropDetectionSpec.ps1'
     'Resolve-IntuneDropAllowlistMatch.ps1'
+    'Resolve-IntuneDropGraphCertificate.ps1'
     'Move-IntuneDropInstallerToOutcomeFolder.ps1'
 )
 

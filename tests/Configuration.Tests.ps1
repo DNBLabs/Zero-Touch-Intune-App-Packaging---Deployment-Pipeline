@@ -21,7 +21,10 @@ Describe 'IntuneDropPipeline configuration' {
                 'INTUNE_DROP_TEST_GROUP_ID',
                 'AZURE_TENANT_ID',
                 'AZURE_CLIENT_ID',
-                'AZURE_CLIENT_SECRET'
+                'AZURE_CLIENT_SECRET',
+                'AZURE_CLIENT_CERTIFICATE_THUMBPRINT',
+                'AZURE_CLIENT_CERTIFICATE_PATH',
+                'AZURE_CLIENT_CERTIFICATE_PASSWORD'
             )) {
             $script:savedEnv[$key] = [Environment]::GetEnvironmentVariable($key, 'Process')
         }
@@ -49,6 +52,8 @@ Describe 'IntuneDropPipeline configuration' {
         $env:INTUNE_DROP_TEST_GROUP_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
         $env:AZURE_TENANT_ID = '11111111-1111-1111-1111-111111111111'
         $env:AZURE_CLIENT_ID = '22222222-2222-2222-2222-222222222222'
+        Remove-Item Env:AZURE_CLIENT_CERTIFICATE_THUMBPRINT -ErrorAction SilentlyContinue
+        Remove-Item Env:AZURE_CLIENT_CERTIFICATE_PATH -ErrorAction SilentlyContinue
         $env:AZURE_CLIENT_SECRET = 'unit-test-secret'
 
         Import-Module -Name $moduleManifest -Force
@@ -56,33 +61,71 @@ Describe 'IntuneDropPipeline configuration' {
         $configuration = Get-IntuneDropConfiguration
         $configuration.InboxPath | Should -Be $expectedInbox
         $configuration.PrepToolExe | Should -Be 'C:\Tools\IntuneWinAppUtil.exe'
+        $configuration.AzureClientCertificateThumbprint | Should -BeNullOrEmpty
+        $configuration.AzureClientSecret | Should -Be 'unit-test-secret'
     }
 
-    It 'throws with only missing variable names when AZURE_CLIENT_SECRET is absent' {
+    It 'accepts certificate thumbprint without client secret' {
         $env:INTUNE_DROP_PREP_TOOL_EXE = 'C:\Tools\IntuneWinAppUtil.exe'
         $env:INTUNE_DROP_TEST_GROUP_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
         $env:AZURE_TENANT_ID = '11111111-1111-1111-1111-111111111111'
         $env:AZURE_CLIENT_ID = '22222222-2222-2222-2222-222222222222'
         Remove-Item Env:AZURE_CLIENT_SECRET -ErrorAction SilentlyContinue
+        Remove-Item Env:AZURE_CLIENT_CERTIFICATE_PATH -ErrorAction SilentlyContinue
+        $env:AZURE_CLIENT_CERTIFICATE_THUMBPRINT = 'ABCDEF0123456789FEDCBA9876543210ABCDEF01'
+
+        Import-Module -Name $moduleManifest -Force
+
+        $configuration = Get-IntuneDropConfiguration
+        $configuration.AzureClientCertificateThumbprint | Should -Be 'ABCDEF0123456789FEDCBA9876543210ABCDEF01'
+        $configuration.AzureClientSecret | Should -BeNullOrEmpty
+    }
+
+    It 'throws when no graph application credential is configured' {
+        $env:INTUNE_DROP_PREP_TOOL_EXE = 'C:\Tools\IntuneWinAppUtil.exe'
+        $env:INTUNE_DROP_TEST_GROUP_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+        $env:AZURE_TENANT_ID = '11111111-1111-1111-1111-111111111111'
+        $env:AZURE_CLIENT_ID = '22222222-2222-2222-2222-222222222222'
+        Remove-Item Env:AZURE_CLIENT_SECRET -ErrorAction SilentlyContinue
+        Remove-Item Env:AZURE_CLIENT_CERTIFICATE_THUMBPRINT -ErrorAction SilentlyContinue
+        Remove-Item Env:AZURE_CLIENT_CERTIFICATE_PATH -ErrorAction SilentlyContinue
 
         Import-Module -Name $moduleManifest -Force
 
         $exception = { Get-IntuneDropConfiguration } | Should -Throw -PassThru
-        $exception.Exception.Message | Should -Match 'AZURE_CLIENT_SECRET'
-        $exception.Exception.Message | Should -Not -Match 'unit-test-secret'
+        $exception.Exception.Message | Should -Match 'Missing Graph application credential'
     }
 
-    It 'lists all missing required keys when several are absent' {
+    It 'throws when more than one graph credential is configured' {
+        $env:INTUNE_DROP_PREP_TOOL_EXE = 'C:\Tools\IntuneWinAppUtil.exe'
+        $env:INTUNE_DROP_TEST_GROUP_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+        $env:AZURE_TENANT_ID = '11111111-1111-1111-1111-111111111111'
+        $env:AZURE_CLIENT_ID = '22222222-2222-2222-2222-222222222222'
+        $env:AZURE_CLIENT_SECRET = 'unit-test-secret'
+        $env:AZURE_CLIENT_CERTIFICATE_THUMBPRINT = 'ABCDEF0123456789FEDCBA9876543210ABCDEF01'
+        Remove-Item Env:AZURE_CLIENT_CERTIFICATE_PATH -ErrorAction SilentlyContinue
+
+        Import-Module -Name $moduleManifest -Force
+
+        $exception = { Get-IntuneDropConfiguration } | Should -Throw -PassThru
+        $exception.Exception.Message | Should -Match 'Ambiguous Graph application credential'
+    }
+
+    It 'lists all missing required keys when several base keys are absent' {
         Remove-Item Env:INTUNE_DROP_PREP_TOOL_EXE -ErrorAction SilentlyContinue
-        Remove-Item Env:AZURE_CLIENT_SECRET -ErrorAction SilentlyContinue
         Remove-Item Env:AZURE_CLIENT_ID -ErrorAction SilentlyContinue
+        $env:INTUNE_DROP_TEST_GROUP_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+        $env:AZURE_TENANT_ID = '11111111-1111-1111-1111-111111111111'
+        Remove-Item Env:AZURE_CLIENT_CERTIFICATE_THUMBPRINT -ErrorAction SilentlyContinue
+        Remove-Item Env:AZURE_CLIENT_CERTIFICATE_PATH -ErrorAction SilentlyContinue
+        $env:AZURE_CLIENT_SECRET = 'unit-test-secret'
 
         Import-Module -Name $moduleManifest -Force
 
         $exception = { Get-IntuneDropConfiguration } | Should -Throw -PassThru
         $message = $exception.Exception.Message
         $message | Should -Match 'AZURE_CLIENT_ID'
-        $message | Should -Match 'AZURE_CLIENT_SECRET'
         $message | Should -Match 'INTUNE_DROP_PREP_TOOL_EXE'
+        $message | Should -Not -Match 'unit-test-secret'
     }
 }

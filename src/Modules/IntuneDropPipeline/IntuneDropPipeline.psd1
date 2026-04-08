@@ -30,7 +30,7 @@ CompanyName = 'Unknown'
 Copyright = '(c) Portfolio. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'Configuration, filename parsing, allowlisted install intent, MSI product code lookup on Windows, and logging for zero-touch Intune Win32 packaging.'
+Description = 'Configuration, filename parsing, allowlisted install intent, MSI product code lookup (Windows), IntuneWin packaging, and logging for zero-touch Intune Win32 deployment.'
 
 # Minimum version of the PowerShell engine required by this module
 PowerShellVersion = '7.0'
@@ -69,7 +69,7 @@ PowerShellVersion = '7.0'
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = 'Get-IntuneDropConfiguration', 'Get-IntuneDropInstallIntent', 'Get-IntuneDropMsiProductCode', 'Get-IntuneDropPackageFromFileName', 'Write-IntuneDropLog'
+FunctionsToExport = 'Get-IntuneDropConfiguration', 'Get-IntuneDropInstallIntent', 'Get-IntuneDropMsiProductCode', 'Get-IntuneDropPackageFromFileName', 'New-IntuneDropWin32Package', 'Write-IntuneDropLog'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()

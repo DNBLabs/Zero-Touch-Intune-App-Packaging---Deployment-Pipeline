@@ -4,7 +4,7 @@ Convention-over-configuration **PowerShell 7** pipeline: drop an allowlisted `.m
 
 ## Status
 
-**Task 5** — `Get-IntuneDropMsiProductCode` reads **ProductCode** from an `.msi` via **Windows Installer COM** (Windows only; `ERR_MSI_METADATA` on failure). Optional integration test: set `INTUNE_DROP_TEST_MSI_PATH` to a real MSI, then `Invoke-Pester .\tests`. Entry scripts arrive in later tasks.
+**Task 6** — `New-IntuneDropWin32Package` runs **IntuneWinAppUtil.exe** under an isolated job folder under **staging** (`ERR_PACKAGING` on failure; stdout/stderr logs next to the job). Unit tests mock the prep process; use a real `.msi`/`.exe` and installed prep tool for manual validation. Entry scripts arrive in later tasks.
 
 ## Documentation
 
@@ -52,6 +52,13 @@ Committed rows live in **`src/Modules/IntuneDropPipeline/Data/IntuneDropAllowlis
 | `portfolio-inno-style-exe-v1` | `exe` | `"<file>" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART` | Example **Inno-style** flags; file detection path is `%ProgramFiles%\<Vendor>\<AppName>\<AppName>.exe` — adjust the JSON if your EXE installs elsewhere. |
 
 Resolve intent: `Get-IntuneDropInstallIntent -Package (Get-IntuneDropPackageFromFileName -FileName '...')`.
+
+Packaging example (after configuring `Get-IntuneDropConfiguration`):
+
+```powershell
+$c = Get-IntuneDropConfiguration
+New-IntuneDropWin32Package -InstallerPath (Join-Path $c.InboxPath 'Contoso_App_1.0.0.msi') -StagingPath $c.StagingPath -PrepToolExe $c.PrepToolExe
+```
 
 ## Layout
 

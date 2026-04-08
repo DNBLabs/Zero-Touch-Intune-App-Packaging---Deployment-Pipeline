@@ -39,13 +39,18 @@ function ConvertTo-IntuneDropWin32LobCreateBody {
                 $fullPath = [string]$detection.Path
                 $parent = Split-Path -Path $fullPath -Parent
                 $leaf = Split-Path -Path $fullPath -Leaf
+                $fileOperationType = [string]$detection.DetectionType
+                # Allowlist uses "version"; Graph file rules expect operationType appVersion for PE/file version (win32LobAppFileSystemOperationType).
+                if ($fileOperationType -eq 'version') {
+                    $fileOperationType = 'appVersion'
+                }
                 [void]$detectionRules.Add(@{
                     '@odata.type'          = '#microsoft.graph.win32LobAppFileSystemRule'
                     'ruleType'             = 'detection'
                     'path'                 = $parent
                     'fileOrFolderName'     = $leaf
                     'check32BitOn64System' = $false
-                    'operationType'        = [string]$detection.DetectionType
+                    'operationType'        = $fileOperationType
                     'operator'             = [string]$detection.Operator
                     'comparisonValue'      = [string]$detection.ExpectedValue
                 })
@@ -134,6 +139,7 @@ function ConvertTo-IntuneDropWin32LobCreateBody {
             rule0Path             = if ($null -ne $dbgRule0['path']) { [string]$dbgRule0['path'] } else { $null }
             rule0PathEmpty        = [string]::IsNullOrEmpty([string]$dbgRule0['path'])
             rule0FileOrFolderName = if ($null -ne $dbgRule0['fileOrFolderName']) { [string]$dbgRule0['fileOrFolderName'] } else { $null }
+            rule0OperationType    = if ($null -ne $dbgRule0['operationType']) { [string]$dbgRule0['operationType'] } else { $null }
             hasMsiInformation     = $body.Keys -contains 'msiInformation'
             installCmdLen         = ($body['installCommandLine']).Length
             uninstallCmdLen       = ($body['uninstallCommandLine']).Length
@@ -141,7 +147,7 @@ function ConvertTo-IntuneDropWin32LobCreateBody {
         $dbgPayload = [ordered]@{
             sessionId    = '7596d3'
             timestamp    = [int64]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())
-            hypothesisId = 'H1,H3,H4,H6,H7'
+            hypothesisId = 'H1,H3,H4,H6,H7,H8'
             location     = 'ConvertTo-IntuneDropWin32LobCreateBody:end'
             message      = 'win32LobApp create body summary'
             data         = $dbgData

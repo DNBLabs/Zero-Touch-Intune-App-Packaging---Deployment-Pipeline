@@ -23,7 +23,7 @@ Describe 'ConvertTo-IntuneDropWin32LobCreateBody' {
             $rule = $body.rules[0]
             $rule.'@odata.type' | Should -Be '#microsoft.graph.win32LobAppFileSystemRule'
             $rule.ruleType | Should -Be 'detection'
-            $rule.operationType | Should -Be 'version'
+            $rule.operationType | Should -Be 'appVersion'
             $rule.operator | Should -Be 'greaterThanOrEqual'
             $rule.comparisonValue | Should -Be '2.0'
             $rule.PSObject.Properties.Name | Should -Not -Contain 'detectionType'

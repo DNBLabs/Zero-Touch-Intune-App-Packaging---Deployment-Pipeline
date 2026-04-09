@@ -1,24 +1,12 @@
 # Zero-Touch Intune App Packaging & Deployment Pipeline
 
-Convention-over-configuration **PowerShell 7** pipeline: drop an allowlisted `.msi` or `.exe` into `inbox/`, produce a `.intunewin` with Microsoft’s **Win32 Content Prep Tool**, then publish and assign a Win32 app in **Microsoft Intune** via **Microsoft Graph** (lab / portfolio scope).
+**Drop-folder automation** for **Microsoft Intune**: an allowlisted `.msi` or `.exe` lands in `inbox/`, the pipeline builds a **`.intunewin`** with Microsoft’s **Win32 Content Prep Tool**, then **creates, uploads, and assigns** a Win32 LOB app via **Microsoft Graph**. This repo is a **portfolio build**; structure, auth, and failure handling follow patterns I would use in a **production-adjacent** environment (explicit config, tests, no committed secrets).
 
-## Status
+**Stack:** PowerShell 7 · Microsoft Graph PowerShell (**beta** APIs for Win32 LOB) · Intune Win32 · Pester · PSScriptAnalyzer  
 
-**Task 11 (portfolio docs)** — Operator checklist and **`tools/Import-IntuneDropEnv.ps1`** below: load `.env` into PowerShell, smoke-test Graph, understand **Intune enrollment** vs Entra-only for app delivery.
+**Security posture:** `.env.example` only in git; **certificate-based app auth preferred** over client secrets; optional `config.local.json` for paths (gitignored).  
 
-**Task 9–10** — `Invoke-IntuneDropInboxSweep` enumerates inbox `*.exe` / `*.msi` and runs `Invoke-IntuneDropForFile` per file (idempotent second pass when the inbox is empty). **`Process-Inbox.ps1 -Once`** is the explicit single-sweep entrypoint. **`Watch-Inbox.ps1`** uses a debounced **FileSystemWatcher** (Created / Changed / Renamed) instead of polling; for large installers, copy under a temporary name in `inbox/` then **rename** to the final `Vendor_AppName_x.y.z.*` so the watcher sees a complete file.
-
-**Task 8** (complete) — Orchestrator: `Invoke-IntuneDropForFile` runs parse → allowlist → pack → Graph create/upload/assign → move the original installer to `done/`; failures after configuration load move to `failed/` with an optional `*.reason.txt`. Use `-NoAutoConnect` on `Invoke-IntuneDropForFile` when you already ran `Connect-IntuneDropGraphSession`.
-
-**Task 7** (complete) — Microsoft Graph (**beta**): `Connect-IntuneDropGraphSession`, `New-IntuneDropWin32LobApp`, `Publish-IntuneDropWin32LobIntuneWinContent`, `New-IntuneDropWin32LobGroupAssignment`, `Disconnect-IntuneDropGraphSession`. Requires `Install-Module Microsoft.Graph` (see [Microsoft Graph PowerShell SDK](https://learn.microsoft.com/powershell/microsoftgraph/installation)). App registration needs **Application** permission **DeviceManagementApps.ReadWrite.All** (admin consent). Graph failures surface **`ERR_GRAPH`**. Unit tests mock `Invoke-IntuneDropGraphRequest` / blob PUT.
-
-## Documentation
-
-| Document | Purpose |
-|----------|---------|
-| [docs/SPEC.md](docs/SPEC.md) | Requirements, commands, boundaries, success criteria |
-| [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md) | Dependency order, tasks, checkpoints |
-| [docs/ideas/drop-folder-intune-convention.md](docs/ideas/drop-folder-intune-convention.md) | Original concept one-pager |
+**Proof points:** Pester tests with **mocked Graph** / blob upload; stable **`ERR_*`** codes on failure; idempotent inbox sweep and debounced **FileSystemWatcher** for large installers.
 
 ## Quick start
 
@@ -39,7 +27,20 @@ pwsh -File .\src\Process-Inbox.ps1 -Once
 pwsh -File .\src\Watch-Inbox.ps1 -DebounceSeconds 3
 ```
 
-See `docs/SPEC.md` for step-by-step and edge cases.
+See [docs/SPEC.md](docs/SPEC.md) for step-by-step flow and edge cases.
+
+## Project status
+
+Orchestration (**parse → allowlist → pack → Graph → file moves**), Graph publish/assign, and **Process-Inbox** / **Watch-Inbox** entrypoints are in place; portfolio documentation and lab checklists continue under **Task 11**. Detailed task-by-task notes live in **[docs/STATUS.md](docs/STATUS.md)**.
+
+## Documentation
+
+| Document | Purpose |
+|----------|---------|
+| [docs/SPEC.md](docs/SPEC.md) | Requirements, commands, boundaries, success criteria |
+| [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md) | Dependency order, tasks, checkpoints |
+| [docs/STATUS.md](docs/STATUS.md) | Task-level implementation status |
+| [docs/ideas/drop-folder-intune-convention.md](docs/ideas/drop-folder-intune-convention.md) | Original concept one-pager |
 
 ## Configuration
 
@@ -114,7 +115,7 @@ staging/     # Created at runtime; gitignored
 done/        # Successfully processed files; gitignored
 failed/      # Rejected files; gitignored
 tools/       # Import-IntuneDropEnv.ps1 + readme; place IntuneWinAppUtil locally, do not commit it
-docs/        # Specs and plans
+docs/        # Specs, plans, and status
 ```
 
 ## Development

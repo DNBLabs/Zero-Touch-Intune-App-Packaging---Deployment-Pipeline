@@ -52,7 +52,8 @@ function Get-IntuneDropMsiProductCode {
             $comInstaller = New-Object -ComObject WindowsInstaller.Installer
             $comDatabase = $comInstaller.OpenDatabase($resolvedPath, 0)
             $comView = $comDatabase.OpenView("SELECT Value FROM Property WHERE Property='ProductCode'")
-            $comView.Execute()
+            # Execute() returns a VARIANT that PowerShell places on the success stream; suppress so the function emits only the product code string.
+            [void]$comView.Execute()
             $comRecord = $comView.Fetch()
         }
         catch {

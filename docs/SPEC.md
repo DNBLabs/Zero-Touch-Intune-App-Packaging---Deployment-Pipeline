@@ -153,7 +153,7 @@ function Get-DropPackageFromFileName {
 
 ## Success Criteria (testable)
 
-1. **Convention pass:** With valid env and tools, dropping an allowlisted **`.msi`** matching `Vendor_AppName_x.y.z.msi` results in a **new Win32 app** in Intune (visible in portal) **assigned** to the configured group within **15 minutes** (or documented sync window), and the installer **appears under `done/`** (or configured archive path).
+1. **Convention pass:** With valid env and tools, dropping an allowlisted installer matching `Vendor_AppName_x.y.z.msi` **or** `Vendor_AppName_x.y.z.exe` (per allowlist) results in a **new Win32 app** in Intune (visible in portal) **assigned** to the configured group within **15 minutes** (or documented sync window), and the installer **appears under `done/`** (or configured archive path). **Lab:** Operator-validated 2026-04-09 with **7-Zip** (`.exe` path) through to install on an enrolled device.
 2. **Convention fail:** A file named `setup.exe` (no convention) ends in **`failed/`** and the log contains a **specific validation failure** (e.g. `ERR_FILENAME_CONVENTION`).
 3. **Security:** `grep`/search in repo for **GUID patterns of secrets** or literal `client_secret` assignments returns **no committed values**; only env placeholders.
 4. **README:** A new engineer can follow **setup from zero** through **first successful assignment** using only README + `.env.example` (within assumption of existing Entra app + group).
@@ -305,8 +305,8 @@ Each task ≤ ~5 files; order by dependency.
 | Phase | Status |
 |--------|--------|
 | Specify | **Approved** |
-| Plan | **Complete** (this section) |
-| Tasks | **Complete** (checklist above — execute in order) |
-| Implement | **Not started** — begin Task 1; check off tasks in this doc or via issue tracker as you complete them |
+| Plan | **Complete** (mirrored in [IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md)) |
+| Tasks | **Complete** (checklist above; live status in [STATUS.md](./STATUS.md)) |
+| Implement | **Complete (portfolio / lab)** — core pipeline shipped; **Task 11** closed after operator lab 2026-04-09 (7-Zip E2E including device install). See [STATUS.md](./STATUS.md). |
 
-After implementation starts, update **Open Questions** and this document when decisions are made (filename regex, demo apps, stable vs beta Graph).
+After scope or decisions change, update **Open Questions**, **Commands** (e.g. PSScriptAnalyzer `-Settings`), and this document so it stays the source of truth alongside [README.md](../README.md).

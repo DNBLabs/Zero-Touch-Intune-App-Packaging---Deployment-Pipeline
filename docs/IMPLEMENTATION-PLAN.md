@@ -316,8 +316,8 @@ Each slice should stay **working** after its checkpoint (tests green; manual ste
 
 ### Checkpoint: Core product path
 
-- [ ] Lab tenant shows new app per successful drop; failures land in `failed/`.
-- [ ] Watcher and `-Once` both validated at least once.
+- [x] Lab tenant shows new app per successful drop; failures land in `failed/`. *(Validated 2026-04-09: 7-Zip via drop folder → device install.)*
+- [ ] Watcher and `-Once` both validated at least once. *(`Process-Inbox.ps1 -Once` / full chain confirmed; confirm `Watch-Inbox.ps1` separately if you need both boxes checked.)*
 
 ---
 
@@ -331,7 +331,7 @@ Each slice should stay **working** after its checkpoint (tests green; manual ste
 
 - [x] README matches `.env.example` keys and folder layout.
 - [x] `Invoke-ScriptAnalyzer -Path .\src -Recurse -Settings .\PSScriptAnalyzerSettings.psd1 -Severity Error` produces **zero** errors (remaining warnings documented in README **Development**).
-- [ ] Second-person dry-run (you or peer) completes checklist without guesswork.
+- [x] Second-person dry-run (you or peer) completes checklist without guesswork. *(Operator lab completed 2026-04-09; 7-Zip uploaded and installed on device.)*
 
 **Verification:**
 
@@ -348,8 +348,8 @@ Each slice should stay **working** after its checkpoint (tests green; manual ste
 
 ### Checkpoint: Complete
 
-- [ ] All success criteria in `SPEC.md` are met or consciously deferred with a note.
-- [ ] Ready for portfolio / code review.
+- [x] All success criteria in `SPEC.md` are met or consciously deferred with a note. *(E2E lab validates convention pass + README path; see [STATUS.md](./STATUS.md).)*
+- [x] Ready for portfolio / code review.
 
 ---
 

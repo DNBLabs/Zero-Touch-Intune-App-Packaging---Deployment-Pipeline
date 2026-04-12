@@ -4,7 +4,7 @@ This document tracks **implementation task status** for the Intune drop-folder p
 
 ## Current tasks
 
-**Task 11 (portfolio docs)** — Operator checklist and **`tools/Import-IntuneDropEnv.ps1`** in the root [README](../README.md): load `.env` into PowerShell, smoke-test Graph, understand **Intune enrollment** vs Entra-only for app delivery.
+**Task 11** (complete) — **Lab E2E validated (2026-04-09):** 7-Zip packaged via the drop folder, published through Graph, **installed on an Intune-enrolled device**. README checklist and env import path exercised successfully by the operator.
 
 **Task 9–10** — `Invoke-IntuneDropInboxSweep` enumerates inbox `*.exe` / `*.msi` and runs `Invoke-IntuneDropForFile` per file (idempotent second pass when the inbox is empty). **`Process-Inbox.ps1 -Once`** is the explicit single-sweep entrypoint. **`Watch-Inbox.ps1`** uses a debounced **FileSystemWatcher** (Created / Changed / Renamed) instead of polling; for large installers, copy under a temporary name in `inbox/` then **rename** to the final `Vendor_AppName_x.y.z.*` so the watcher sees a complete file.
 
